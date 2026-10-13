@@ -55,8 +55,8 @@
 
 .schedule-detail {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
 }
 
 .detail-row {
@@ -114,7 +114,7 @@
 
 .members-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   overflow-y: auto;
   flex: 1;
@@ -122,7 +122,7 @@
 
 .participant-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px;
   border: 2px solid #e0e0e0;
@@ -132,27 +132,29 @@
   background-color: #f9f9f9;
 }
 
-.participant-card:hover {
+/* .participant-card:hover {
   border-color: #667eea;
   background-color: #f5f7fa;
-}
+} */
 
 .participant-card.selected {
   border-color: #667eea;
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  background-color: #75bdf8a2;
   border-width: 2px;
 }
 
-.participant-card input[type="checkbox"] {
+/* .participant-card input[type="checkbox"] {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  margin: 0;
-}
+  margin: 2px 0 0;
+  flex-shrink: 0;
+} */
 
 .participant-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 4px;
   flex: 1;
 }

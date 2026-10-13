@@ -41,20 +41,20 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           <h2>練習情報</h2>
           <div className="schedule-detail">
             <div className="detail-row">
-              <span className="detail-label">📅 日付:</span>
+              <span className="detail-label">📅 日付</span>
               <span className="detail-value">{formatDate(schedule.date)}</span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">🕐 時間:</span>
+              <span className="detail-label">🕐 時間</span>
               <span className="detail-value">{schedule.time}</span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">📍 場所:</span>
+              <span className="detail-label">📍 場所</span>
               <span className="detail-value">{schedule.location}</span>
             </div>
             {schedule.notes && (
               <div className="detail-row">
-                <span className="detail-label">📝 備考:</span>
+                <span className="detail-label">📝 備考</span>
                 <span className="detail-value">{schedule.notes}</span>
               </div>
             )}
@@ -70,19 +70,14 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           <div className="members-list">
             {membersData.length > 0 ? (
               membersData.map((member, index) => (
-                <label key={index} className={`participant-card ${selectedParticipants.has(index) ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={selectedParticipants.has(index)}
-                    onChange={() => handleParticipantToggle(index)}
-                  />
+                <div key={index} className={`participant-card ${selectedParticipants.has(index) ? 'selected' : ''}`} onClick={() => handleParticipantToggle(index)}>
                   <div className="participant-info">
                     <div className="participant-name">{member.name}</div>
                     {member.hasCar && (
                       <div className="participant-car">🚗 {member.capacity}名</div>
                     )}
                   </div>
-                </label>
+                </div>
               ))
             ) : (
               <div className="empty-message">メンバーがまだ登録されていません</div>
