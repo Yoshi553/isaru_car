@@ -103,6 +103,12 @@
   margin: 0;
 }
 
+.participant-count{
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
 .participant-count {
   background-color: #667eea;
   color: white;
@@ -171,7 +177,7 @@
   font-weight: 600;
 }
 
-.assignment-summary {
+/* .assignment-summary {
   background: white;
   border-radius: 12px;
   padding: 25px;
@@ -206,8 +212,8 @@
 .summary-row strong {
   color: #667eea;
   font-size: 16px;
-}
-
+} */
+/* 
 .drivers-list {
   display: flex;
   flex-direction: column;
@@ -230,7 +236,7 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-}
+} */
 
 .empty-message {
   text-align: center;

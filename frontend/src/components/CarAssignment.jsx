@@ -64,7 +64,10 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
         <div className="participants-section">
           <div className="participants-header">
             <h2>参加者選択</h2>
-            <span className="participant-count">{selectedParticipants.size}名</span>
+            <div className="participant-count">
+              <span>参加者：{selectedParticipants.size}名</span>
+              <span>車を持つ人：{driverCandidates.length}名</span>
+            </div>
           </div>
 
           <div className="members-list">
@@ -85,7 +88,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           </div>
         </div>
 
-        {selectedParticipants.size > 0 && (
+        {/* {selectedParticipants.size > 0 && (
           <div className="assignment-summary">
             <h2>車割りサマリー</h2>
             <div className="summary-content">
@@ -111,7 +114,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
               )}
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="assignment-actions">
           <button onClick={onBack} className="cancel-button">キャンセル</button>
