@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100vh;
   background-color: #f5f7fa;
+  background: linear-gradient(135deg, #667eea 0%, #4b83a2 100%);
 }
 
 .header-left {
