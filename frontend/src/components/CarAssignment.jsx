@@ -3,6 +3,8 @@ import './CarAssignment.css'
 
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
+  const [assignments, setAssignments] = useState([])
+  const [unassignmentPassengers, setUnassignmentPassengers] = useState([])
 
   const handleParticipantToggle = (index) => {
     const newSelected = new Set(selectedParticipants)
@@ -13,6 +15,77 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
     }
     setSelectedParticipants(newSelected)
   }
+
+
+// 車割り作成のロジック
+const calcDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371 // 地球の半径 (km)
+  const toRad = (degree) => degree * Math.PI / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) **2
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c // 距離 (km)
+}
+
+
+const handleCreateAssignments = () => {
+    const participants = Array.from(selectedParticipants).map(index => membersData[index])
+
+    console.log('Selected Participants:', participants)
+    console.log('Driver Candidates:', participants.filter(member => member.hasCar))
+
+    const drivers = participants.filter(member => member.hasCar)
+    const passengers = participants.filter(member => !member.hasCar)
+
+    const newAssignments = drivers.map(driver => ({
+      driver: driver, 
+      passengers: [],
+    }))
+    
+    const unassignmened = []
+
+    passengers.forEach(passenger => {
+      const availableCars = newAssignments.filter(
+        assignment => assignment.passengers.length < assignment.driver.capacity - 1
+      )
+
+      if (availableCars.length === 0){
+        unassignmened.push(passenger)
+        return
+      }
+
+      const nearestCar = availableCars.reduce((nearest, current) => {
+      const nearestDistance = calcDistance(
+        passenger.latitude, passenger.longitude, nearest.driver.latitude, nearest.driver.longitude)
+
+      const currentDistance = calcDistance(
+        passenger.latitude, passenger.longitude, current.driver.latitude, current.driver.longitude)
+
+      return currentDistance < nearestDistance ? current : nearest
+      })
+
+      nearestCar.passengers.push(passenger)
+    })
+
+    setAssignments(newAssignments)
+    setUnassignmentPassengers(unassignmened)
+    console.log('Assignments:', newAssignments)
+
+    // if (unassignmentPassengers.length > 0) {
+    //   alert(`以下の参加者は車に割り当てられませんでした:\n${unassignmentPassengers.map(member => member.name).join(', ')}`)
+   }
+
+   
+
+
+
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString + 'T00:00:00')
@@ -33,7 +106,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           <button onClick={onBack} className="back-button">←</button>
           <h1>🚗 車割り作成</h1>
         </div>
-        <button onClick={onLogout} className="logout-button">ログアウト</button>
+
       </header>
 
       <div className="assignment-content">
@@ -64,7 +137,10 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
         <div className="participants-section">
           <div className="participants-header">
             <h2>参加者選択</h2>
-            <span className="participant-count">{selectedParticipants.size}名</span>
+            <div className="participant-count">
+              <span>参加者：{selectedParticipants.size}名</span>
+              <span>車を持つ人：{driverCandidates.length}名</span>
+            </div>
           </div>
 
           <div className="members-list">
@@ -85,41 +161,57 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           </div>
         </div>
 
-        {selectedParticipants.size > 0 && (
-          <div className="assignment-summary">
-            <h2>車割りサマリー</h2>
-            <div className="summary-content">
-              <div className="summary-row">
-                <span>総参加者数:</span>
-                <strong>{selectedParticipants.size}名</strong>
-              </div>
-              <div className="summary-row">
-                <span>車を持つ人:</span>
-                <strong>{driverCandidates.length}名</strong>
-              </div>
-              {driverCandidates.length > 0 && (
-                <div className="drivers-list">
-                  <span>運転者:</span>
-                  <div className="drivers">
-                    {driverCandidates.map((driver, index) => (
-                      <div key={index} className="driver-badge">
-                        {driver.name} ({driver.capacity}名)
-                      </div>
-                    ))}
-                  </div>
+        {assignments.length > 0 && (
+          <div className="assignment-result">
+            <h2>車割り結果</h2>
+
+            {unassignmentPassengers.length > 0 && (
+              <div className="unassigned-passengers">
+                <h3>⚠️ 車が足りません</h3>
+                <p>以下の参加者は車に割り当てられていません。</p>
+
+                <div className="unassigned-list">
+                  {unassignmentPassengers.map((member, index) => (
+                    <div key={index} className="unassigned-member">
+                      {member.name}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {assignments.map((assignment, index) => (
+              <div key={index} className="assignment-card">
+                <div className="assignment-card-header">
+                  <h3>🚗 {assignment.driver.name}カー</h3>
+                  <span className="assignment-count">
+                    {assignment.passengers.length + 1}名
+                  </span>
+                </div>
+
+                <div className="assignment-passengers">
+                  {assignment.passengers.map((passenger, passengerIndex) => (
+                    <div key={passengerIndex} className="assignment-passenger">
+                      {passenger.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         <div className="assignment-actions">
-          <button onClick={onBack} className="cancel-button">キャンセル</button>
-          <button 
+          <button
             className="create-button"
             disabled={selectedParticipants.size === 0}
+            onClick={handleCreateAssignments}
           >
             車割りを作成
+          </button>
+
+          <button onClick={onBack} className="cancel-button">
+            キャンセル
           </button>
         </div>
       </div>
