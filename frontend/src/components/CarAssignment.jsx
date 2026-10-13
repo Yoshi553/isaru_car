@@ -1,10 +1,51 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './CarAssignment.css'
 
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
   const [assignments, setAssignments] = useState([])
   const [unassignmentPassengers, setUnassignmentPassengers] = useState([])
+
+  // 保存済みの車割りを読み込む
+useEffect(() => {
+  const fetchAssignments = async () => {
+    if (!schedule?.id) return
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/assignments/${schedule.id}`
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || '車割りの取得に失敗しました')
+      }
+
+      setAssignments(data.assignments)
+      // 保存済みの参加者を選択状態にする
+const participantResponse = await fetch(
+  `http://localhost:3001/api/participants/${schedule.id}`
+)
+
+const participantData = await participantResponse.json()
+
+if (participantResponse.ok) {
+  const selectedIndexes = membersData
+    .map((member, index) => (
+      participantData.participantIds.includes(member.id) ? index : -1
+    ))
+    .filter(index => index !== -1)
+
+  setSelectedParticipants(new Set(selectedIndexes))
+}
+    } catch (error) {
+      console.error('車割り取得エラー:', error)
+    }
+  }
+
+  fetchAssignments()
+}, [schedule?.id])
 
   const handleParticipantToggle = (index) => {
     const newSelected = new Set(selectedParticipants)
@@ -34,7 +75,7 @@ const calcDistance = (lat1, lon1, lat2, lon2) => {
 }
 
 
-const handleCreateAssignments = () => {
+const handleCreateAssignments = async() => {
     const participants = Array.from(selectedParticipants).map(index => membersData[index])
 
     console.log('Selected Participants:', participants)
@@ -77,8 +118,37 @@ const handleCreateAssignments = () => {
     setUnassignmentPassengers(unassignmened)
     console.log('Assignments:', newAssignments)
 
-    // if (unassignmentPassengers.length > 0) {
-    //   alert(`以下の参加者は車に割り当てられませんでした:\n${unassignmentPassengers.map(member => member.name).join(', ')}`)
+
+// 車割りをSupabaseに保存
+try {
+  const response = await fetch('http://localhost:3001/api/assignments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      scheduleId: schedule.id,
+      participantIds: participants.map(member => member.id),
+      assignments: newAssignments.map(assignment => ({
+        driverId: assignment.driver.id,
+        passengerIds: assignment.passengers.map(passenger => passenger.id)
+      }))
+    })
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || '車割りの保存に失敗しました')
+  }
+
+  alert('車割りを保存しました！')
+} catch (error) {
+  console.error('車割り保存エラー:', error)
+  alert('車割りの保存に失敗しました。ターミナルを確認してください。')
+}
+
+
    }
 
    
