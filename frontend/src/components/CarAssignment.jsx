@@ -117,13 +117,14 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
         )} */}
 
         <div className="assignment-actions">
-          <button onClick={onBack} className="cancel-button">キャンセル</button>
           <button 
             className="create-button"
             disabled={selectedParticipants.size === 0}
           >
             車割りを作成
           </button>
+          <button onClick={onBack} className="cancel-button">キャンセル</button>
+
         </div>
       </div>
     </div>
