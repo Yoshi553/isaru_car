@@ -1,8 +1,14 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { createClient } from '@supabase/supabase-js'
 
 dotenv.config()
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+)
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -45,6 +51,27 @@ const membersData = [
 // ルート
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' })
+})
+
+// Supabase接続テスト
+app.get('/api/db-test', async (req, res) => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('id')
+    .limit(1)
+
+  if (error) {
+    console.error('Supabase接続エラー:', error.message)
+    return res.status(500).json({
+      status: 'error',
+      message: 'データベースへのアクセスに失敗しました'
+    })
+  }
+
+  res.json({
+    status: 'OK',
+    message: 'Supabaseに接続できました'
+  })
 })
 
 // ログインエンドポイント
