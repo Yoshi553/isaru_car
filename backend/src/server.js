@@ -101,92 +101,177 @@ app.post('/api/login', (req, res) => {
 })
 
 // 練習日程取得エンドポイント
-app.get('/api/schedule', (req, res) => {
-  res.json({
-    schedule: scheduleData
+app.get('/api/schedule', async (req, res) => {
+  // Supabaseから練習日程を取得
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('*')
+    .order('date', { ascending: true })
+
+  if (error) {
+    console.error('練習日程取得エラー:', error.message)
+    return res.status(500).json({
+      message: '練習日程の取得に失敗しました'
+    })
+  }
+
+  // フロントエンドで使う月ごとの形式にまとめる
+  const schedule = {}
+
+  data.forEach(item => {
+    const month = item.date.slice(0, 7)
+
+    if (!schedule[month]) {
+      schedule[month] = []
+    }
+
+    schedule[month].push({
+      id: item.id,
+      date: item.date,
+      time: item.time,
+      location: item.location,
+      notes: item.notes
+    })
   })
+
+  res.json({ schedule })
 })
 
 // 練習日程追加エンドポイント
-app.post('/api/schedule', (req, res) => {
+app.post('/api/schedule', async (req, res) => {
   const { date, time, location, notes } = req.body
 
   // バリデーション
   if (!date || !time || !location) {
-    return res.status(400).json({ 
-      message: '日付、時間、場所は必須です' 
+    return res.status(400).json({
+      message: '日付、時間、場所は必須です'
     })
   }
 
-  // 日付からYYYY-MM形式を抽出
-  const month = date.slice(0, 7)
-
-  // 月が存在しない場合は作成
-  if (!scheduleData[month]) {
-    scheduleData[month] = []
-  }
-
-  // 新しい日程をリストに追加
+  // Supabaseに保存するデータ
   const newSchedule = {
-    date: date,
-    time: time,
-    location: location,
+    date,
+    time,
+    location,
     notes: notes || ''
   }
 
-  scheduleData[month].push(newSchedule)
+  // Supabaseに練習日程を追加
+  const { data, error } = await supabase
+    .from('schedules')
+    .insert(newSchedule)
+    .select()
+    .single()
 
-  // 日付でソート
-  scheduleData[month].sort((a, b) => new Date(a.date) - new Date(b.date))
+  if (error) {
+    console.error('練習日程追加エラー:', error.message)
+    return res.status(500).json({
+      message: '練習日程の追加に失敗しました'
+    })
+  }
 
   return res.status(201).json({
     message: '日程を追加しました',
-    schedule: newSchedule
+    schedule: {
+      id: data.id,
+      date: data.date,
+      time: data.time,
+      location: data.location,
+      notes: data.notes
+    }
   })
 })
 
 // 練習日程削除エンドポイント
-app.delete('/api/schedule', (req, res) => {
+app.delete('/api/schedule', async (req, res) => {
   const { date, time, location } = req.body
 
-  const month = date.slice(0, 7)
-
-  if (!scheduleData[month]) {
-    return res.status(404).json({ 
-      message: '日程が見つかりません' 
+  // 必須項目の確認
+  if (!date || !time || !location) {
+    return res.status(400).json({
+      message: '日付、時間、場所は必須です'
     })
   }
 
-  const index = scheduleData[month].findIndex(
-    schedule => 
-      schedule.date === date && 
-      schedule.time === time && 
-      schedule.location === location
-  )
+  // 削除対象の日程を検索
+  const { data: targetSchedule, error: searchError } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('date', date)
+    .eq('time', time)
+    .eq('location', location)
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
-  if (index === -1) {
-    return res.status(404).json({ 
-      message: '日程が見つかりません' 
+  if (searchError) {
+    console.error('練習日程検索エラー:', searchError.message)
+    return res.status(500).json({
+      message: '練習日程の検索に失敗しました'
     })
   }
 
-  const deletedSchedule = scheduleData[month].splice(index, 1)[0]
+  if (!targetSchedule) {
+    return res.status(404).json({
+      message: '日程が見つかりません'
+    })
+  }
+
+  // Supabaseから日程を削除
+  const { error: deleteError } = await supabase
+    .from('schedules')
+    .delete()
+    .eq('id', targetSchedule.id)
+
+  if (deleteError) {
+    console.error('練習日程削除エラー:', deleteError.message)
+    return res.status(500).json({
+      message: '練習日程の削除に失敗しました'
+    })
+  }
 
   return res.status(200).json({
     message: '日程を削除しました',
-    schedule: deletedSchedule
+    schedule: {
+      id: targetSchedule.id,
+      date: targetSchedule.date,
+      time: targetSchedule.time,
+      location: targetSchedule.location,
+      notes: targetSchedule.notes
+    }
   })
 })
 
 // メンバー取得エンドポイント
-app.get('/api/members', (req, res) => {
-  res.json({
-    members: membersData
-  })
+app.get('/api/members', async (req, res) => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .order('id', { ascending: true })
+
+  if (error) {
+    console.error('メンバー取得エラー:', error.message)
+    return res.status(500).json({
+      message: 'メンバーの取得に失敗しました'
+    })
+  }
+
+  // データベースの列名をフロントエンドの形式に変換
+  const members = data.map(member => ({
+    id: member.id,
+    name: member.name,
+    hasCar: member.has_car,
+    latitude: member.latitude,
+    longitude: member.longitude,
+    pickupLocation: member.pickup_location,
+    capacity: member.capacity
+  }))
+
+  res.json({ members })
 })
 
 // メンバー追加エンドポイント
-app.post('/api/members', (req, res) => {
+app.post('/api/members', async (req, res) => {
   const { name, hasCar, latitude, longitude, pickupLocation, capacity } = req.body
 
   // バリデーション
@@ -203,37 +288,106 @@ app.post('/api/members', (req, res) => {
     })
   }
 
-  // 新しいメンバーを作成
-  const newMember = {
-    name: name,
-    hasCar: hasCar || false,
-    latitude: latitude,
-    longitude: longitude,
-    pickupLocation: pickupLocation,
-    capacity: hasCar ? capacity : null
-  }
+// Supabaseに保存するデータ
+const newMember = {
+  name: name,
+  has_car: hasCar || false,
+  latitude: latitude,
+  longitude: longitude,
+  pickup_location: pickupLocation,
+  capacity: hasCar ? capacity : null
+}
 
-  membersData.push(newMember)
+// Supabaseにメンバーを追加
 
-  return res.status(201).json({
-    message: 'メンバーを追加しました',
-    member: newMember
-  })
-})
+  const { data, error } = await supabase
 
-// メンバー削除エンドポイント
-app.delete('/api/members', (req, res) => {
-  const { name } = req.body
+    .from('members')
+    .insert(newMember)
+    .select()
+    .single()
 
-  const index = membersData.findIndex(member => member.name === name)
+  if (error) {
+    console.error('メンバー追加エラー:', error.message)
 
-  if (index === -1) {
-    return res.status(404).json({ 
-      message: 'メンバーが見つかりません' 
+    return res.status(500).json({
+      message: 'メンバーの追加に失敗しました'
     })
   }
 
-  const deletedMember = membersData.splice(index, 1)[0]
+  // フロントエンド向けの形式に変換
+
+  const member = {
+    id: data.id,
+    name: data.name,
+    hasCar: data.has_car,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    pickupLocation: data.pickup_location,
+    capacity: data.capacity
+  }
+
+  return res.status(201).json({
+    message: 'メンバーを追加しました', member
+  })
+
+})
+
+// メンバー削除エンドポイント
+app.delete('/api/members', async (req, res) => {
+  const { name } = req.body
+
+  if (!name) {
+    return res.status(400).json({
+      message: 'メンバーの名前が必要です'
+    })
+  }
+
+  // 削除対象のメンバーを検索
+  const { data: targetMember, error: searchError } = await supabase
+    .from('members')
+    .select('*')
+    .eq('name', name)
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (searchError) {
+    console.error('メンバー検索エラー:', searchError.message)
+    return res.status(500).json({
+      message: 'メンバーの検索に失敗しました'
+    })
+  }
+
+  if (!targetMember) {
+    return res.status(404).json({
+      message: 'メンバーが見つかりません'
+    })
+  }
+
+  // Supabaseからメンバーを削除
+  const { error: deleteError } = await supabase
+    .from('members')
+    .delete()
+    .eq('id', targetMember.id)
+
+  if (deleteError) {
+    console.error('メンバー削除エラー:', deleteError.message)
+    return res.status(500).json({
+      message: 'メンバーの削除に失敗しました'
+    })
+  }
+
+  // フロントエンド向けの形式に変換
+  const deletedMember = {
+    id: targetMember.id,
+    name: targetMember.name,
+    hasCar: targetMember.has_car,
+    latitude: targetMember.latitude,
+    longitude: targetMember.longitude,
+    pickupLocation: targetMember.pickup_location,
+    capacity: targetMember.capacity
+  }
 
   return res.status(200).json({
     message: 'メンバーを削除しました',
@@ -242,46 +396,296 @@ app.delete('/api/members', (req, res) => {
 })
 
 // メンバー編集エンドポイント
-app.put('/api/members', (req, res) => {
-  const { originalName, name, hasCar, latitude, longitude, pickupLocation, capacity } = req.body
+app.put('/api/members', async (req, res) => {
+  const {
+    originalName,
+    name,
+    hasCar,
+    latitude,
+    longitude,
+    pickupLocation,
+    capacity
+  } = req.body
 
   // バリデーション
-  if (!originalName || !name || latitude === undefined || longitude === undefined || !pickupLocation) {
-    return res.status(400).json({ 
-      message: '名前、緯度、経度、送迎場所の名前は必須です' 
+  if (
+    !originalName ||
+    !name ||
+    latitude === undefined ||
+    longitude === undefined ||
+    !pickupLocation
+  ) {
+    return res.status(400).json({
+      message: '名前、緯度、経度、送迎場所の名前は必須です'
     })
   }
 
   // 車がある場合は乗車可能人数の確認
   if (hasCar && !capacity) {
-    return res.status(400).json({ 
-      message: '車がある場合は乗車可能人数を指定してください' 
+    return res.status(400).json({
+      message: '車がある場合は乗車可能人数を指定してください'
     })
   }
 
-  const index = membersData.findIndex(member => member.name === originalName)
+  // 編集対象のメンバーを検索
+  const { data: targetMember, error: searchError } = await supabase
+    .from('members')
+    .select('*')
+    .eq('name', originalName)
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
-  if (index === -1) {
-    return res.status(404).json({ 
-      message: 'メンバーが見つかりません' 
+  if (searchError) {
+    console.error('メンバー検索エラー:', searchError.message)
+    return res.status(500).json({
+      message: 'メンバーの検索に失敗しました'
     })
   }
 
-  // メンバー情報を更新
-  membersData[index] = {
-    name: name,
-    hasCar: hasCar || false,
-    latitude: latitude,
-    longitude: longitude,
-    pickupLocation: pickupLocation,
-    capacity: hasCar ? capacity : null
+  if (!targetMember) {
+    return res.status(404).json({
+      message: 'メンバーが見つかりません'
+    })
+  }
+
+  // Supabaseのデータを更新
+  const { data, error } = await supabase
+    .from('members')
+    .update({
+      name,
+      has_car: hasCar || false,
+      latitude,
+      longitude,
+      pickup_location: pickupLocation,
+      capacity: hasCar ? capacity : null
+    })
+    .eq('id', targetMember.id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('メンバー編集エラー:', error.message)
+    return res.status(500).json({
+      message: 'メンバーの編集に失敗しました'
+    })
+  }
+
+  // フロントエンド向けの形式に変換
+  const member = {
+    id: data.id,
+    name: data.name,
+    hasCar: data.has_car,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    pickupLocation: data.pickup_location,
+    capacity: data.capacity
   }
 
   return res.status(200).json({
     message: 'メンバーを編集しました',
-    member: membersData[index]
+    member
   })
 })
+
+// 車割り保存エンドポイント
+app.post('/api/assignments', async (req, res) => {
+  const { scheduleId, participantIds, assignments } = req.body
+
+  // 車割り取得エンドポイント
+
+
+  // 入力チェック
+  if (
+    !scheduleId ||
+    !Array.isArray(participantIds) ||
+    !Array.isArray(assignments)
+  ) {
+    return res.status(400).json({
+      message: '車割りの保存に必要な情報が不足しています'
+    })
+  }
+
+  // 参加者データを作成
+  const participants = participantIds.map(memberId => ({
+    schedule_id: scheduleId,
+    member_id: memberId
+  }))
+
+  // 車割りデータを作成
+  const assignmentRows = []
+
+  assignments.forEach(assignment => {
+    // 運転手自身も割り当てに含める
+    assignmentRows.push({
+      schedule_id: scheduleId,
+      member_id: assignment.driverId,
+      driver_id: assignment.driverId,
+      pickup_order: 0
+    })
+
+    // 同乗者を割り当てる
+    assignment.passengerIds.forEach((passengerId, index) => {
+      assignmentRows.push({
+        schedule_id: scheduleId,
+        member_id: passengerId,
+        driver_id: assignment.driverId,
+        pickup_order: index + 1
+      })
+    })
+  })
+
+  // 既存の参加者情報を削除
+  const { error: participantDeleteError } = await supabase
+    .from('participants')
+    .delete()
+    .eq('schedule_id', scheduleId)
+
+  if (participantDeleteError) {
+    console.error('参加者削除エラー:', participantDeleteError.message)
+    return res.status(500).json({
+      message: '参加者情報の更新に失敗しました'
+    })
+  }
+
+  // 既存の車割り情報を削除
+  const { error: assignmentDeleteError } = await supabase
+    .from('assignments')
+    .delete()
+    .eq('schedule_id', scheduleId)
+
+  if (assignmentDeleteError) {
+    console.error('車割り削除エラー:', assignmentDeleteError.message)
+    return res.status(500).json({
+      message: '既存の車割り情報の削除に失敗しました'
+    })
+  }
+
+  // 参加者を保存
+  if (participants.length > 0) {
+    const { error } = await supabase
+    .from('participants')
+    .upsert(participants, {
+      onConflict: 'schedule_id,member_id'
+    })
+
+  if (error) {
+    console.error('参加者保存エラー:', error.message)
+    return res.status(500).json({
+      message: '参加者情報の保存に失敗しました'
+    })
+  }
+}
+
+  // 車割りを保存
+  if (assignmentRows.length > 0) {
+    const { error } = await supabase
+      .from('assignments')
+      .insert(assignmentRows)
+
+    if (error) {
+      console.error('車割り保存エラー:', error.message)
+      return res.status(500).json({
+        message: '車割りの保存に失敗しました'
+      })
+    }
+  }
+
+  return res.status(200).json({
+    message: '車割りを保存しました'
+  })
+})
+
+
+app.get('/api/assignments/:scheduleId', async (req, res) => {
+  const scheduleId = Number(req.params.scheduleId)
+
+  if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+    return res.status(400).json({
+      message: '予定IDが正しくありません'
+    })
+  }
+
+  const { data, error } = await supabase
+    .from('assignments')
+    .select(`
+      member_id,
+      driver_id,
+      pickup_order,
+      member:members!assignments_member_id_fkey (
+        id,
+        name
+      ),
+      driver:members!assignments_driver_id_fkey (
+        id,
+        name
+      )
+    `)
+    .eq('schedule_id', scheduleId)
+    .order('pickup_order', { ascending: true })
+
+  if (error) {
+    console.error('車割り取得エラー:', error.message)
+    return res.status(500).json({
+      message: '車割りの取得に失敗しました'
+    })
+  }
+
+  const assignmentsMap = new Map()
+
+  data.forEach(item => {
+    if (!assignmentsMap.has(item.driver_id)) {
+      assignmentsMap.set(item.driver_id, {
+        driver: item.driver,
+        passengers: []
+      })
+    }
+
+    // 運転手本人は同乗者に含めない
+    if (item.member_id !== item.driver_id) {
+      assignmentsMap.get(item.driver_id).passengers.push({
+        id: item.member.id,
+        name: item.member.name,
+        pickupOrder: item.pickup_order
+      })
+    }
+  })
+
+  res.json({
+    assignments: Array.from(assignmentsMap.values())
+  })
+})
+
+// 参加者取得エンドポイント
+app.get('/api/participants/:scheduleId', async (req, res) => {
+  const scheduleId = Number(req.params.scheduleId)
+
+  if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+    return res.status(400).json({
+      message: '予定IDが正しくありません'
+    })
+  }
+
+  const { data, error } = await supabase
+    .from('participants')
+    .select('member_id')
+    .eq('schedule_id', scheduleId)
+
+  if (error) {
+    console.error('参加者取得エラー:', error.message)
+    return res.status(500).json({
+      message: '参加者の取得に失敗しました'
+    })
+  }
+
+  res.json({
+    participantIds: data.map(item => item.member_id)
+  })
+})
+
+
+
+
 
 // サーバー起動
 app.listen(PORT, () => {
