@@ -6,6 +6,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
   const [assignments, setAssignments] = useState([])
   const [unassignmentPassengers, setUnassignmentPassengers] = useState([])
+  const [showParticipants, setShowParticipants] = useState(true)
 
   // 保存済みの車割りを読み込む
 useEffect(() => {
@@ -111,6 +112,7 @@ const handleCreateAssignments = async() => {
     })
 
     setAssignments(newAssignments)
+    setShowParticipants(false)
     setUnassignmentPassengers(unassignmened)
     console.log('Assignments:', newAssignments)
 
@@ -147,7 +149,8 @@ try {
   const driverCandidates = selectedParticipantsData.filter(member => member.hasCar)
 
   return (
-    <div className="car-assignment-container">
+  
+  <div className="car-assignment-container">
       <header className="dashboard-header">
         <div className="header-left">
           <button onClick={onBack} className="back-button">←</button>
@@ -184,12 +187,17 @@ try {
         <div className="participants-section">
           <div className="participants-header">
             <h2>参加者選択</h2>
+
+            <button className="toggle-participants-button" onClick={() => setShowParticipants(!showParticipants)}>
+              {showParticipants ? '▲ 閉じる' : '▼ 参加者を表示'}
+            </button>
             <div className="participant-count">
               <span>参加者：{selectedParticipants.size}名</span>
               <span>車を持つ人：{driverCandidates.length}名</span>
             </div>
           </div>
 
+          {showParticipants && (
           <div className="members-list">
             {membersData.length > 0 ? (
               membersData.map((member, index) => (
@@ -206,7 +214,9 @@ try {
               <div className="empty-message">メンバーがまだ登録されていません</div>
             )}
           </div>
+        )}
         </div>
+        
 
         <div className="assignment-actions">
           <button
@@ -266,7 +276,6 @@ try {
         
       </div>
     </div>
-  )
-}
+)}
 
 export default CarAssignment

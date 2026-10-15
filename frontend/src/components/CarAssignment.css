@@ -93,7 +93,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 2px solid #f0f0f0;
 }
@@ -102,6 +104,7 @@
   color: #667eea;
   font-size: 18px;
   margin: 0;
+  cursor: pointer;
 }
 
 .participant-count{
@@ -235,6 +238,12 @@
   cursor: not-allowed;
 }
 
+.assignment-actions{
+  margin-top: -10px;
+  border-radius: 8px;
+}
+
+
 
 .unassigned-result {
   margin-top: 20px;
@@ -358,6 +367,22 @@
   font-weight: 600;
 }
 
+.toggle-participants-button {
+  padding: 6px 12px;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  background-color: white;
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-participants-button:hover {
+  background-color: #667eea;
+  color: white;
+}
 
 
 @media (max-width: 1024px) {
