@@ -205,7 +205,7 @@ function Members({ membersData, onMemberAdded }) {
         return
       }
 
-      await axios.put('/api/members', {
+      await api.put('/api/members', {
         originalName: originalName,
         name: name,
         hasCar: hasCar === 'yes',
@@ -253,7 +253,7 @@ function Members({ membersData, onMemberAdded }) {
         
         await Promise.all(
           membersToDelete.map(member =>
-            axios.delete('/api/members', {
+            api.delete('/api/members', {
               data: { name: member.name }
             })
           )

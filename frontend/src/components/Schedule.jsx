@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import api from './api'
+import api from '../api'
 import './Schedule.css'
 
 function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded, onScheduleSelect }) {
