@@ -6,6 +6,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
   const [assignments, setAssignments] = useState([])
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(true)
+  const [isLoadingParticipants, setIsLoadingParticipants] = useState(true)
   const [unassignmentPassengers, setUnassignmentPassengers] = useState([])
   const [showParticipants, setShowParticipants] = useState(true)
 
@@ -17,6 +18,7 @@ useEffect(() => {
     try {
       setIsLoadingAssignments(true)
       const response = await api.get(`/api/assignments/${schedule.id}`)
+      setIsLoadingParticipants(true)
       const data = response.data
       console.log('保存済みの車割り:', data.assignments)
 
@@ -44,6 +46,7 @@ if (participantResponse.status === 200) {
       console.error('車割り取得エラー:', error)
     }finally{
       setIsLoadingAssignments(false)
+      setIsLoadingParticipants(false)
     }
   }
 
@@ -205,7 +208,10 @@ try {
 
           {showParticipants && (
           <div className="members-list">
-            {membersData.length > 0 ? (
+            {isLoadingParticipants ? (
+              <p className="loading-message">参加者取得中...</p>
+            ) : 
+            membersData.length > 0 ? (
               membersData.map((member, index) => (
                 <div key={index} className={`participant-card ${selectedParticipants.has(index) ? 'selected' : ''}`} onClick={() => handleParticipantToggle(index)}>
                   <div className="participant-info">
@@ -259,7 +265,7 @@ try {
             )}
 
             {isLoadingAssignments ? (
-              <p className="loading-message">車割り参照中...</p>
+              <p className="loading-message">車割り取得中...</p>
             ) : (
               assignments.map((assignment, index) => (
               <div key={index} className="assignment-card">
