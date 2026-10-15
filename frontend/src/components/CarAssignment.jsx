@@ -124,6 +124,8 @@ try {
     }))
   })
 
+  alert ('車割りを保存しました')
+
   console.log('車割りを保存しました')
 } catch (error) {
   console.error('車割り保存エラー:', error)
