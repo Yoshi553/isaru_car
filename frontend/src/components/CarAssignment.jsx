@@ -18,6 +18,7 @@ useEffect(() => {
       const data = response.data
 
       setAssignments(data.assignments)
+      console.log('取得した車割り:', data.assignments)
       // 保存済みの参加者を選択状態にする
       const participantResponse = await api.get(
         `/api/participants/${schedule.id}`
@@ -257,7 +258,7 @@ try {
                 <div className="assignment-card-header">
                   <h3>🚗 {assignment.driver.name}カー</h3>
                   <span className="assignment-count">
-                    {assignment.passengers.length + 1}名
+                    {assignment.passengers.length + 1}/{assignment.driver.capacity}名
                   </span>
                 </div>
 

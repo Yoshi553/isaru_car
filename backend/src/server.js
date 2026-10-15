@@ -718,7 +718,8 @@ app.get('/api/assignments/:scheduleId', async (req, res) => {
       ),
       driver:members!assignments_driver_id_fkey (
         id,
-        name
+        name,
+        capacity
       )
     `)
     .eq('schedule_id', scheduleId)
