@@ -16,6 +16,7 @@ useEffect(() => {
     try {
       const response = await api.get(`/api/assignments/${schedule.id}`)
       const data = response.data
+      console.log('保存済みの車割り:', data.assignments)
 
       setAssignments(data.assignments)
       console.log('取得した車割り:', data.assignments)
