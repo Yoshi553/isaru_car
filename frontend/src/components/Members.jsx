@@ -370,7 +370,7 @@ function Members({ membersData, onMemberAdded }) {
                 </label>
               )}
               <div className="member-name">{member.name}</div>
-              <div className="member-year">{member.enrollmentYear }年入学</div>
+              <div className="member-year">{member.enrollmentYear }年</div>
               {member.hasCar && (
                 <div className="member-car">🚗 {member.capacity}名</div>
               )}
