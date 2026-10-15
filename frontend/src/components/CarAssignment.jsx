@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import api from '../api'
 import './CarAssignment.css'
 
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
@@ -12,25 +13,18 @@ useEffect(() => {
     if (!schedule?.id) return
 
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/assignments/${schedule.id}`
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || '車割りの取得に失敗しました')
-      }
+      const response = await api.get(`/api/assignments/${schedule.id}`)
+      const data = response.data
 
       setAssignments(data.assignments)
       // 保存済みの参加者を選択状態にする
-const participantResponse = await fetch(
-  `http://localhost:3001/api/participants/${schedule.id}`
-)
+      const participantResponse = await api.get(
+        `/api/participants/${schedule.id}`
+      )
 
-const participantData = await participantResponse.json()
+      const participantData = participantResponse.data
 
-if (participantResponse.ok) {
+if (participantResponse.status === 200) {
   const selectedIndexes = membersData
     .map((member, index) => (
       participantData.participantIds.includes(member.id) ? index : -1
@@ -118,44 +112,23 @@ const handleCreateAssignments = async() => {
     setUnassignmentPassengers(unassignmened)
     console.log('Assignments:', newAssignments)
 
-
-// 車割りをSupabaseに保存
 try {
-  const response = await fetch('http://localhost:3001/api/assignments', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      scheduleId: schedule.id,
-      participantIds: participants.map(member => member.id),
-      assignments: newAssignments.map(assignment => ({
-        driverId: assignment.driver.id,
-        passengerIds: assignment.passengers.map(passenger => passenger.id)
-      }))
-    })
+  await api.post('/api/assignments', {
+    scheduleId: schedule.id,
+    participantIds: participants.map(member => member.id),
+    assignments: newAssignments.map(assignment => ({
+      driverId: assignment.driver.id,
+      passengerIds: assignment.passengers.map(passenger => passenger.id)
+    }))
   })
 
-  const result = await response.json()
-
-  if (!response.ok) {
-    throw new Error(result.message || '車割りの保存に失敗しました')
-  }
-
-  alert('車割りを保存しました！')
+  console.log('車割りを保存しました')
 } catch (error) {
   console.error('車割り保存エラー:', error)
-  alert('車割りの保存に失敗しました。ターミナルを確認してください。')
+}
 }
 
-
-   }
-
    
-
-
-
-
 
   const formatDate = (dateString) => {
     const date = new Date(dateString + 'T00:00:00')
