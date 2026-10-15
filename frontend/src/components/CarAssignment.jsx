@@ -4,6 +4,11 @@ import './CarAssignment.css'
 
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
+const sortedMembersData = membersData
+  .map((member, index) => ({ ...member, originalIndex: index }))
+  .sort((a, b) => {
+    return (a.enrollmentYear ?? Infinity) - (b.enrollmentYear ?? Infinity)
+  })
   const [assignments, setAssignments] = useState([])
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(true)
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(true)
@@ -137,6 +142,7 @@ try {
 
   alert ('車割り作成完了')
 
+
   console.log('車割りを保存しました')
 } catch (error) {
   console.error('車割り保存エラー:', error)
@@ -212,8 +218,8 @@ try {
               <p className="loading-message">参加者取得中...</p>
             ) : 
             membersData.length > 0 ? (
-              membersData.map((member, index) => (
-                <div key={index} className={`participant-card ${selectedParticipants.has(index) ? 'selected' : ''}`} onClick={() => handleParticipantToggle(index)}>
+              membersData.map((member) => (
+                <div key={member.id} className={`participant-card ${selectedParticipants.has(member.originalIndex) ? 'selected' : ''}`} onClick={() => handleParticipantToggle(member.originalIndex)}>
                   <div className="participant-info">
                     <div className="participant-name">{member.name}</div>
                     {member.hasCar && (

@@ -38,18 +38,6 @@ const scheduleData = {
   ]
 }
 
-// モックデータ: メンバー
-const membersData = [
-  { name: '太郎', hasCar: true, latitude: 35.6762, longitude: 139.7674, pickupLocation: '渋谷駅', capacity: 4 },
-  { name: '次郎', hasCar: true, latitude: 35.6812, longitude: 139.7671, pickupLocation: '原宿駅', capacity: 5 },
-  { name: '花子', hasCar: false, latitude: 35.6895, longitude: 139.6917, pickupLocation: '新宿駅', capacity: null },
-  { name: '美咲', hasCar: false, latitude: 35.6615, longitude: 139.7454, pickupLocation: '品川駅', capacity: null },
-  { name: '健二', hasCar: true, latitude: 35.6672, longitude: 139.7306, pickupLocation: '東京駅', capacity: 5 },
-  { name: '由美', hasCar: false, latitude: 35.7313, longitude: 139.7580, pickupLocation: '北千住駅', capacity: null },
-  { name: '拓也', hasCar: true, latitude: 35.5308, longitude: 139.7029, pickupLocation: 'さいたま新都心駅', capacity: 4 },
-  { name: '春奈', hasCar: false, latitude: 35.4437, longitude: 139.6380, pickupLocation: '横浜駅', capacity: null }
-]
-
 // ルート
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' })
