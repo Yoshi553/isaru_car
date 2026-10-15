@@ -23,6 +23,7 @@ useEffect(() => {
       )
 
       const participantData = participantResponse.data
+      console.log('保存済みの参加者ID:', participantData.participantIds)
 
 if (participantResponse.status === 200) {
   const selectedIndexes = membersData
@@ -32,6 +33,7 @@ if (participantResponse.status === 200) {
     .filter(index => index !== -1)
 
   setSelectedParticipants(new Set(selectedIndexes))
+  console.log('復元する参加者のインデックス:', selectedIndexes)
 }
     } catch (error) {
       console.error('車割り取得エラー:', error)
@@ -204,6 +206,21 @@ try {
           </div>
         </div>
 
+        <div className="assignment-actions">
+          <button
+            className="create-button"
+            disabled={selectedParticipants.size === 0}
+            onClick={handleCreateAssignments}
+          >
+            車割りを作成
+          </button>
+
+          <button onClick={onBack} className="cancel-button">
+            キャンセル
+          </button>
+        </div>
+
+
         {assignments.length > 0 && (
           <div className="assignment-result">
             <h2>車割り結果</h2>
@@ -244,19 +261,7 @@ try {
           </div>
         )}
 
-        <div className="assignment-actions">
-          <button
-            className="create-button"
-            disabled={selectedParticipants.size === 0}
-            onClick={handleCreateAssignments}
-          >
-            車割りを作成
-          </button>
-
-          <button onClick={onBack} className="cancel-button">
-            キャンセル
-          </button>
-        </div>
+        
       </div>
     </div>
   )
