@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import './LoginPage.css'
 
 function LoginPage({ onLogin }) {
@@ -13,7 +13,7 @@ function LoginPage({ onLogin }) {
     setIsLoading(true)
 
     try {
-      const response = await axios.post('/api/login', {
+      const response = await api.post('/api/login', {
         passphrase: passphrase
       })
 

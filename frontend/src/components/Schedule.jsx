@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from './api'
 import './Schedule.css'
 
 function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded, onScheduleSelect }) {
@@ -52,7 +52,7 @@ function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded,
 
     setIsSubmitting(true)
     try {
-      await axios.post('/api/schedule', formData)
+      await api.post('/api/schedule', formData)
       setFormData({ date: '', time: '', location: '', notes: '' })
       setShowAddForm(false)
       if (onScheduleAdded) {

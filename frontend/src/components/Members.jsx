@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api'
 import './Members.css'
 
 function Members({ membersData, onMemberAdded }) {
@@ -11,7 +11,7 @@ function Members({ membersData, onMemberAdded }) {
   const [editMode, setEditMode] = useState(false)
   const [editFormData, setEditFormData] = useState({
     originalName: '',
-    name: '',
+    name: '', 
     hasCar: 'no',
     latitude: '',
     longitude: '',
@@ -36,7 +36,7 @@ function Members({ membersData, onMemberAdded }) {
   useEffect(() => {
     const fetchPickupLocations = async () => {
       try {
-        const response = await axios.get('/api/pickup-locations')
+        const response = await api.get('/api/pickup-locations')
         setPickupLocations(response.data.locations)
       } catch (error) {
         console.error('送迎場所の取得に失敗しました:', error)
@@ -92,7 +92,7 @@ function Members({ membersData, onMemberAdded }) {
 
     setIsSubmitting(true)
     try {
-      await axios.post('/api/members', {
+      await api .post('/api/members', {
         name: formData.name,
         hasCar: formData.hasCar === 'yes',
         latitude: parseFloat(formData.latitude),
@@ -137,7 +137,7 @@ function Members({ membersData, onMemberAdded }) {
       try {
         const member = membersData[index]
         
-        await axios.delete('/api/members', {
+        await api.delete('/api/members', {
           data: {
             name: member.name
           }

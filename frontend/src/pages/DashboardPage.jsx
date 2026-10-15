@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api'
 import Schedule from '../components/Schedule'
 import Members from '../components/Members'
 import CarAssignment from '../components/CarAssignment'
@@ -24,8 +24,8 @@ function DashboardPage({ onLogout }) {
     setError('')
     try {
       const [scheduleRes, membersRes] = await Promise.all([
-        axios.get('/api/schedule'),
-        axios.get('/api/members')
+        api.get('/api/schedule'),
+        api.get('/api/members')
       ])
       setScheduleData(scheduleRes.data.schedule || {})
       setMembersData(membersRes.data.members || [])

@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
+import jwt from 'jsonwebtoken'
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ const supabase = createClient(
 const app = express()
 const PORT = process.env.PORT || 3001
 const PASSPHRASE = process.env.PASSPHRASE
+const JWT_SECRET = process.env.JWT_SECRET
 
 // ミドルウェア
 app.use(cors())
@@ -74,31 +76,75 @@ app.get('/api/db-test', async (req, res) => {
   })
 })
 
+
 // ログインエンドポイント
 app.post('/api/login', (req, res) => {
   const { passphrase } = req.body
 
-  // 入力値の検証
   if (!passphrase) {
-    return res.status(400).json({ message: '合言葉を入力してください' })
-  }
-
-  // パスフレーズの確認
-  if (passphrase === PASSPHRASE) {
-    // 本来はJWTなどでトークンを生成
-    const token = Buffer.from(JSON.stringify({ 
-      timestamp: Date.now(),
-      authenticated: true
-    })).toString('base64')
-
-    return res.status(200).json({
-      message: 'ログインに成功しました',
-      token: token
+    return res.status(400).json({
+      message: '合言葉を入力してください'
     })
-  } else {
-    return res.status(401).json({ message: '合言葉が正しくありません' })
   }
+
+  if (!PASSPHRASE || !JWT_SECRET) {
+    console.error('認証用の環境変数が設定されていません')
+
+    return res.status(500).json({
+      message: 'サーバーの認証設定に問題があります'
+    })
+  }
+
+  if (passphrase !== PASSPHRASE) {
+    return res.status(401).json({
+      message: '合言葉が正しくありません'
+    })
+  }
+
+  // JWTを発行する
+  const token = jwt.sign(
+    { authenticated: true },
+    JWT_SECRET,
+    { expiresIn: '12h' }
+  )
+
+  return res.status(200).json({
+    message: 'ログインに成功しました',
+    token
+  })
 })
+
+// ログイン状態を確認するミドルウェア
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers.authorization
+
+  // トークンが送信されていない場合
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      message: 'ログインが必要です'
+    })
+  }
+
+  // トークンを取り出す
+  const token = authHeader.split(' ')[1]
+
+  // トークンを検証する
+  jwt.verify(token, JWT_SECRET, (error, decoded) => {
+    if (error || decoded.authenticated !== true) {
+      return res.status(401).json({
+        message: 'ログインの有効期限が切れたか、認証に失敗しました'
+      })
+    }
+
+    // 認証成功
+    req.user = decoded
+    next()
+  })
+}
+
+// ログイン以外のAPIを保護する
+app.use('/api', authenticateToken)
+
 
 // 練習日程取得エンドポイント
 app.get('/api/schedule', async (req, res) => {
