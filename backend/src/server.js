@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const app = express()
 const PORT = process.env.PORT || 3001
-const PASSPHRASE = process.env.PASSPHRASE || 'secret123'
+const PASSPHRASE = process.env.PASSPHRASE
 
 // ミドルウェア
 app.use(cors())
@@ -835,6 +835,4 @@ app.post('/api/pickup-locations', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚗 車割りアプリ - バックエンドサーバー起動`)
   console.log(`📍 ポート: ${PORT}`)
-  console.log(`🔐 現在のパスフレーズ: ${PASSPHRASE}`)
-  console.log(`💡 環境変数PASSPHRASEで変更できます`)
 })
