@@ -12,6 +12,7 @@ function Members({ membersData, onMemberAdded }) {
   const [editFormData, setEditFormData] = useState({
     originalName: '',
     name: '', 
+    enrollmentYear: '',
     hasCar: 'no',
     latitude: '',
     longitude: '',
@@ -22,6 +23,7 @@ function Members({ membersData, onMemberAdded }) {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
+    enrollmentYear: '',
     hasCar: 'no',
     latitude: '',
     longitude: '',
@@ -94,6 +96,7 @@ function Members({ membersData, onMemberAdded }) {
     try {
       await api .post('/api/members', {
         name: formData.name,
+        enrollmentYear: Number(formData.enrollmentYear),
         hasCar: formData.hasCar === 'yes',
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude),
@@ -102,6 +105,7 @@ function Members({ membersData, onMemberAdded }) {
       })
       setFormData({
         name: '',
+        enrollmentYear: '',
         hasCar: 'no',
         latitude: '',
         longitude: '',
@@ -132,10 +136,13 @@ function Members({ membersData, onMemberAdded }) {
     setFormError('')
   }
 
-  const handleDeleteMember = async (index) => {
+  const handleDeleteMember = async (memberId) => {
     if (window.confirm('このメンバーを削除しますか？')) {
       try {
-        const member = membersData[index]
+        const member = membersData.find(
+          (member) => member.id === memberId
+        )
+        if (!member) return
         
         await api.delete('/api/members', {
           data: {
@@ -152,30 +159,36 @@ function Members({ membersData, onMemberAdded }) {
     }
   }
 
-  const handleMemberSelect = (index) => {
+  const handleMemberSelect = (memberId) => {
     const newSelected = new Set(selectedMembers)
-    if (newSelected.has(index)) {
-      newSelected.delete(index)
+    if (newSelected.has(memberId)) {
+      newSelected.delete(memberId)
     } else {
-      newSelected.add(index)
+      newSelected.add(memberId)
     }
     setSelectedMembers(newSelected)
   }
-
   const handleEditStart = () => {
-    const member = membersData[selectedMemberIndex]
+    const member = membersData.find(
+    member => member.id === selectedMemberIndex
+    )
+
+    if (!member) return
+
     setEditFormData({
-      originalName: member.name,
-      name: member.name,
-      hasCar: member.hasCar ? 'yes' : 'no',
-      latitude: member.latitude.toString(),
-      longitude: member.longitude.toString(),
-      pickupLocation: member.pickupLocation,
-      capacity: member.capacity ? member.capacity.toString() : ''
+    originalName: member.name,
+    name: member.name,
+    enrollmentYear: member.enrollmentYear?.toString() || '',
+    hasCar: member.hasCar ? 'yes' : 'no',
+    latitude: member.latitude.toString(),
+    longitude: member.longitude.toString(),
+    pickupLocation: member.pickupLocation,
+    capacity: member.capacity ? member.capacity.toString() : ''
     })
+
     setEditMode(true)
     setEditFormError('')
-  }
+    }
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target
@@ -191,7 +204,7 @@ function Members({ membersData, onMemberAdded }) {
     setIsEditSubmitting(true)
 
     try {
-      const { originalName, name, hasCar, latitude, longitude, pickupLocation, capacity } = editFormData
+      const { name, enrollmentYear, hasCar, latitude, longitude, pickupLocation, capacity } = editFormData
 
       if (!name || !latitude || !longitude || !pickupLocation) {
         setEditFormError('すべての項目を入力してください')
@@ -206,8 +219,9 @@ function Members({ membersData, onMemberAdded }) {
       }
 
       await api.put('/api/members', {
-        originalName: originalName,
+        id: selectedMember.id,
         name: name,
+        enrollmentYear: Number(enrollmentYear),
         hasCar: hasCar === 'yes',
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
@@ -233,6 +247,7 @@ function Members({ membersData, onMemberAdded }) {
     setEditFormData({
       originalName: '',
       name: '',
+      enrollmentYear: '',
       hasCar: 'no',
       latitude: '',
       longitude: '',
@@ -249,12 +264,12 @@ function Members({ membersData, onMemberAdded }) {
 
     if (window.confirm(`${selectedMembers.size}人のメンバーを削除しますか？`)) {
       try {
-        const membersToDelete = Array.from(selectedMembers).map(index => membersData[index])
+        const membersToDelete = Array.from(selectedMembers).map(memberId => membersData.find(member => member.id === memberId)).filter(Boolean)
         
         await Promise.all(
           membersToDelete.map(member =>
             api.delete('/api/members', {
-              data: { name: member.name }
+              data: { id: member.id }
             })
           )
         )
@@ -279,6 +294,14 @@ function Members({ membersData, onMemberAdded }) {
     setDeleteMode(false)
     setSelectedMembers(new Set())
   }
+
+  const sortedMembersData = [...membersData].sort((a, b) => {
+    return (a.enrollmentYear ?? Infinity) - (b.enrollmentYear ?? Infinity)
+  })
+
+  const selectedMember = membersData.find(
+    member => member.id === selectedMemberIndex
+  )
 
   return (
     <div className="members-container">
@@ -321,17 +344,18 @@ function Members({ membersData, onMemberAdded }) {
         </div>
       </div>
 
+
       <div className="members-grid">
         {membersData.length > 0 ? (
-          membersData.map((member, index) => (
+          sortedMembersData.map((member, index) => (
             <div 
               key={index} 
-              className={`member-card ${deleteMode && selectedMembers.has(index) ? 'selected' : ''}`}
+              className={`member-card ${deleteMode && selectedMembers.has(member.id) ? 'selected' : ''}`}
               onClick={() => {
                 if (deleteMode) {
-                  handleMemberSelect(index)
+                  handleMemberSelect(member.id)
                 } else {
-                  setSelectedMemberIndex(index)
+                  setSelectedMemberIndex(member.id)
                   setShowDetailModal(true)
                 }
               }}
@@ -340,12 +364,13 @@ function Members({ membersData, onMemberAdded }) {
                 <label className="member-checkbox" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
-                    checked={selectedMembers.has(index)}
-                    onChange={() => handleMemberSelect(index)}
+                    checked={selectedMembers.has(member.id)}
+                    onChange={() => handleMemberSelect(member.id)}
                   />
                 </label>
               )}
               <div className="member-name">{member.name}</div>
+              <div className="member--year">{member.enrollmentYear }年入学</div>
               {member.hasCar && (
                 <div className="member-car">🚗 {member.capacity}名</div>
               )}
@@ -385,6 +410,22 @@ function Members({ membersData, onMemberAdded }) {
                   name="name"
                   placeholder="たろう"
                   value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="enrollmentYear">入学年度 *</label>
+                <input
+                  type="number"
+                  id="enrollmentYear"
+                  name="enrollmentYear"
+                  placeholder="例）2025"
+                  min="2000"
+                  max="2100"
+                  step="1"
+                  value={formData.enrollmentYear}
                   onChange={handleInputChange}
                   required
                 />
@@ -528,7 +569,8 @@ function Members({ membersData, onMemberAdded }) {
       )}
 
       {/* メンバー詳細情報モーダル */}
-      {showDetailModal && selectedMemberIndex !== null && membersData[selectedMemberIndex] && (
+
+      {showDetailModal && selectedMemberIndex !== null && membersData.find(member => member.id === selectedMemberIndex) && (
         <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
           <div className="modal-content detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -546,34 +588,39 @@ function Members({ membersData, onMemberAdded }) {
                 <div className="detail-content">
                   <div className="detail-item">
                     <label>名前</label>
-                    <p>{membersData[selectedMemberIndex].name}</p>
+                    <p>{selectedMember.name}</p>
                   </div>
 
                   <div className="detail-item">
+                    <label>入学年度</label>
+                    <p>{selectedMember.enrollmentYear}年入学</p>
+                    </div>
+
+                  <div className="detail-item">
                     <label>車の有無</label>
-                    <p>{membersData[selectedMemberIndex].hasCar ? 'あり' : 'なし'}</p>
+                    <p>{selectedMember.hasCar ? 'あり' : 'なし'}</p>
                   </div>
 
-                  {membersData[selectedMemberIndex].hasCar && (
+                  {selectedMember.hasCar && (
                     <div className="detail-item">
                       <label>乗車可能人数</label>
-                      <p>{membersData[selectedMemberIndex].capacity}名</p>
+                      <p>{selectedMember.capacity}名</p>
                     </div>
                   )}
 
                   <div className="detail-item">
                     <label>送迎場所の名前</label>
-                    <p>{membersData[selectedMemberIndex].pickupLocation}</p>
+                    <p>{selectedMember.pickupLocation}</p>
                   </div>
 
                   <div className="detail-item">
                     <label>緯度</label>
-                    <p>{membersData[selectedMemberIndex].latitude}</p>
+                    <p>{selectedMember.latitude}</p>
                   </div>
 
                   <div className="detail-item">
                     <label>経度</label>
-                    <p>{membersData[selectedMemberIndex].longitude}</p>
+                    <p>{selectedMember.longitude}</p>
                   </div>
                 </div>
 
@@ -607,6 +654,22 @@ function Members({ membersData, onMemberAdded }) {
                       name="name"
                       placeholder="たろう"
                       value={editFormData.name}
+                      onChange={handleEditInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-enrollmentYear">入学年度 *</label>
+                    <input
+                      type="number"
+                      id="edit-enrollmentYear"
+                      name="enrollmentYear"
+                      placeholder="例）2025"
+                      min="2000"
+                      max="2100"
+                      step="1"
+                      value={editFormData.enrollmentYear}
                       onChange={handleEditInputChange}
                       required
                     />

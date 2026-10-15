@@ -306,6 +306,7 @@ app.get('/api/members', async (req, res) => {
   const members = data.map(member => ({
     id: member.id,
     name: member.name,
+    enrollmentYear: member.enrollment_year,
     hasCar: member.has_car,
     latitude: member.latitude,
     longitude: member.longitude,
@@ -318,7 +319,7 @@ app.get('/api/members', async (req, res) => {
 
 // メンバー追加エンドポイント
 app.post('/api/members', async (req, res) => {
-  const { name, hasCar, latitude, longitude, pickupLocation, capacity } = req.body
+  const { name, enrollmentYear, hasCar, latitude, longitude, pickupLocation, capacity } = req.body
 
   // バリデーション
   if (!name || latitude === undefined || longitude === undefined || !pickupLocation) {
@@ -392,6 +393,7 @@ const memberLocation = location || {
 // Supabaseに保存するメンバーデータ
 const newMember = {
   name: name,
+  enrollment_year: enrollmentYear,
   has_car: hasCar || false,
   latitude: memberLocation.latitude,
   longitude: memberLocation.longitude,
@@ -420,6 +422,7 @@ const newMember = {
   const member = {
     id: data.id,
     name: data.name,
+    enrollmentYear: data.enrollment_year,
     hasCar: data.has_car,
     latitude: data.latitude,
     longitude: data.longitude,
@@ -433,43 +436,24 @@ const newMember = {
 
 })
 
+
+// メンバー編集エンドポイント
 // メンバー削除エンドポイント
 app.delete('/api/members', async (req, res) => {
-  const { name } = req.body
+  const { id } = req.body
 
-  if (!name) {
+  if (id === undefined || id === null) {
     return res.status(400).json({
-      message: 'メンバーの名前が必要です'
-    })
-  }
-
-  // 削除対象のメンバーを検索
-  const { data: targetMember, error: searchError } = await supabase
-    .from('members')
-    .select('*')
-    .eq('name', name)
-    .order('id', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (searchError) {
-    console.error('メンバー検索エラー:', searchError.message)
-    return res.status(500).json({
-      message: 'メンバーの検索に失敗しました'
-    })
-  }
-
-  if (!targetMember) {
-    return res.status(404).json({
-      message: 'メンバーが見つかりません'
+      message: 'メンバーのIDが必要です'
     })
   }
 
   // Supabaseからメンバーを削除
-  const { error: deleteError } = await supabase
+  const { data: deletedMembers, error: deleteError } = await supabase
     .from('members')
     .delete()
-    .eq('id', targetMember.id)
+    .eq('id', id)
+    .select()
 
   if (deleteError) {
     console.error('メンバー削除エラー:', deleteError.message)
@@ -478,10 +462,18 @@ app.delete('/api/members', async (req, res) => {
     })
   }
 
-  // フロントエンド向けの形式に変換
+  if (!deletedMembers || deletedMembers.length === 0) {
+    return res.status(404).json({
+      message: 'メンバーが見つかりません'
+    })
+  }
+
+  const targetMember = deletedMembers[0]
+
   const deletedMember = {
     id: targetMember.id,
     name: targetMember.name,
+    enrollmentYear: targetMember.enrollment_year,
     hasCar: targetMember.has_car,
     latitude: targetMember.latitude,
     longitude: targetMember.longitude,
@@ -495,11 +487,11 @@ app.delete('/api/members', async (req, res) => {
   })
 })
 
-// メンバー編集エンドポイント
 app.put('/api/members', async (req, res) => {
   const {
-    originalName,
+    id,
     name,
+    enrollmentYear,
     hasCar,
     latitude,
     longitude,
@@ -509,14 +501,17 @@ app.put('/api/members', async (req, res) => {
 
   // バリデーション
   if (
-    !originalName ||
+    id === undefined ||
+    id === null ||
     !name ||
+    enrollmentYear === undefined ||
+    enrollmentYear === null ||
     latitude === undefined ||
     longitude === undefined ||
     !pickupLocation
   ) {
     return res.status(400).json({
-      message: '名前、緯度、経度、送迎場所の名前は必須です'
+      message: 'ID、名前、入学年度、緯度、経度、送迎場所の名前は必須です'
     })
   }
 
@@ -527,13 +522,12 @@ app.put('/api/members', async (req, res) => {
     })
   }
 
-  // 編集対象のメンバーを検索
+
+// 編集対象のメンバーを検索
   const { data: targetMember, error: searchError } = await supabase
     .from('members')
     .select('*')
-    .eq('name', originalName)
-    .order('id', { ascending: true })
-    .limit(1)
+    .eq('id', id)
     .maybeSingle()
 
   if (searchError) {
@@ -554,6 +548,7 @@ app.put('/api/members', async (req, res) => {
     .from('members')
     .update({
       name,
+      enrollment_year: enrollmentYear,
       has_car: hasCar || false,
       latitude,
       longitude,
@@ -575,6 +570,7 @@ app.put('/api/members', async (req, res) => {
   const member = {
     id: data.id,
     name: data.name,
+    enrollmentYear: data.enrollment_year,
     hasCar: data.has_car,
     latitude: data.latitude,
     longitude: data.longitude,
