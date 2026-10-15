@@ -160,8 +160,8 @@
 
 .participant-info {
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
   flex: 1;
 }
@@ -178,66 +178,7 @@
   font-weight: 600;
 }
 
-/* .assignment-summary {
-  background: white;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  grid-column: 1 / -1;
-}
 
-.assignment-summary h2 {
-  color: #667eea;
-  font-size: 18px;
-  margin: 0 0 20px 0;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 10px;
-}
-
-.summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  font-size: 15px;
-}
-
-.summary-row strong {
-  color: #667eea;
-  font-size: 16px;
-} */
-/* 
-.drivers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  background-color: #f0f7ff;
-  border-radius: 6px;
-}
-
-.drivers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.driver-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-} */
 
 .empty-message {
   text-align: center;
