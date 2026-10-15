@@ -38,14 +38,12 @@ useEffect(() => {
       console.log('保存済みの参加者ID:', participantData.participantIds)
 
 if (participantResponse.status === 200) {
-  const selectedIndexes = membersData
-    .map((member, index) => (
-      participantData.participantIds.includes(member.id) ? index : -1
-    ))
-    .filter(index => index !== -1)
+  const selectedMemberIds = membersData
+    .filter(member => participantData.participantIds.includes(member.id))
+    .map(member => member.id)
 
-  setSelectedParticipants(new Set(selectedIndexes))
-  console.log('復元する参加者のインデックス:', selectedIndexes)
+  setSelectedParticipants(new Set(selectedMemberIds))
+  console.log('復元する参加者のID:', selectedMemberIds)
 }
     } catch (error) {
       console.error('車割り取得エラー:', error)
@@ -58,17 +56,17 @@ if (participantResponse.status === 200) {
   fetchAssignments()
 }, [schedule?.id])
 
-  const handleParticipantToggle = (index) => {
-    const newSelected = new Set(selectedParticipants)
-    if (newSelected.has(index)) {
-      newSelected.delete(index)
-    } else {
-      newSelected.add(index)
-    }
-    setSelectedParticipants(newSelected)
+const handleParticipantToggle = (memberId) => {
+  const newSelected = new Set(selectedParticipants)
+
+  if (newSelected.has(memberId)) {
+    newSelected.delete(memberId)
+  } else {
+    newSelected.add(memberId)
   }
 
-
+  setSelectedParticipants(newSelected)
+}
 // 車割り作成のロジック
 const calcDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371 // 地球の半径 (km)
@@ -87,7 +85,9 @@ const calcDistance = (lat1, lon1, lat2, lon2) => {
 
 
 const handleCreateAssignments = async() => {
-    const participants = Array.from(selectedParticipants).map(index => membersData[index])
+    const participants = membersData.filter(member =>
+  selectedParticipants.has(member.id)
+)
 
     console.log('Selected Participants:', participants)
     console.log('Driver Candidates:', participants.filter(member => member.hasCar))
@@ -160,7 +160,9 @@ try {
     return `${month}/${day} (${weekDay})`
   }
 
-  const selectedParticipantsData = Array.from(selectedParticipants).map(index => membersData[index])
+  const selectedParticipantsData = membersData.filter(member =>
+  selectedParticipants.has(member.id)
+)
   const driverCandidates = selectedParticipantsData.filter(member => member.hasCar)
 
   return (
@@ -218,8 +220,12 @@ try {
               <p className="loading-message">参加者取得中...</p>
             ) : 
             membersData.length > 0 ? (
-              membersData.map((member) => (
-                <div key={member.id} className={`participant-card ${selectedParticipants.has(member.originalIndex) ? 'selected' : ''}`} onClick={() => handleParticipantToggle(member.originalIndex)}>
+              sortedMembersData.map((member) => (
+  <div
+    key={member.id}
+    className={`participant-card ${selectedParticipants.has(member.id) ? 'selected' : ''}`}
+    onClick={() => handleParticipantToggle(member.id)}
+  >
                   <div className="participant-info">
                     <div className="participant-name">{member.name}</div>
                     {member.hasCar && (
