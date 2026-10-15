@@ -575,6 +575,10 @@
   overflow-y: auto;
 }
 
+.member-year{
+  color: white;
+}
+
 /* 送迎場所の候補 */
 .location-suggestion {
   width: 100%;
