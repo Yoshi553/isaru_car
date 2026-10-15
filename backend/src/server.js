@@ -288,18 +288,72 @@ app.post('/api/members', async (req, res) => {
     })
   }
 
-// Supabaseに保存するデータ
+// 送迎場所の名前を整える
+const locationName = pickupLocation.trim()
+
+let location
+
+// 名前の末尾が「宅」ではない場合だけ、共通の送迎場所として管理
+if (!locationName.endsWith('宅')) {
+  // 登録済みの送迎場所を検索
+  const { data: existingLocation, error: locationSearchError } = await supabase
+    .from('pickup_locations')
+    .select('id, name, latitude, longitude')
+    .eq('name', locationName)
+    .maybeSingle()
+
+  if (locationSearchError) {
+    console.error('送迎場所検索エラー:', locationSearchError.message)
+
+    return res.status(500).json({
+      message: '送迎場所の検索に失敗しました'
+    })
+  }
+
+  location = existingLocation
+
+  // 未登録なら、新しい送迎場所を登録
+  if (!location) {
+    const { data: newLocation, error: locationInsertError } = await supabase
+      .from('pickup_locations')
+      .insert({
+        name: locationName,
+        latitude: Number(latitude),
+        longitude: Number(longitude)
+      })
+      .select('id, name, latitude, longitude')
+      .single()
+
+    if (locationInsertError) {
+      console.error('送迎場所登録エラー:', locationInsertError.message)
+
+      return res.status(500).json({
+        message: '送迎場所の登録に失敗しました'
+      })
+    }
+
+    location = newLocation
+  }
+}
+
+// メンバーに保存する送迎場所の情報
+const memberLocation = location || {
+  name: locationName,
+  latitude: Number(latitude),
+  longitude: Number(longitude)
+}
+
+// Supabaseに保存するメンバーデータ
 const newMember = {
   name: name,
   has_car: hasCar || false,
-  latitude: latitude,
-  longitude: longitude,
-  pickup_location: pickupLocation,
+  latitude: memberLocation.latitude,
+  longitude: memberLocation.longitude,
+  pickup_location: memberLocation.name,
   capacity: hasCar ? capacity : null
 }
 
 // Supabaseにメンバーを追加
-
   const { data, error } = await supabase
 
     .from('members')
@@ -684,6 +738,96 @@ app.get('/api/participants/:scheduleId', async (req, res) => {
 })
 
 
+// 送迎場所一覧取得エンドポイント
+app.get('/api/pickup-locations', async (req, res) => {
+  const { data, error } = await supabase
+    .from('pickup_locations')
+    .select('id, name, latitude, longitude')
+    .order('name', { ascending: true })
+
+  if (error) {
+    console.error('送迎場所取得エラー:', error)
+
+    return res.status(500).json({
+      message: '送迎場所の取得に失敗しました'
+    })
+  }
+
+  return res.status(200).json({
+    locations: data
+  })
+})
+
+// 送迎場所登録エンドポイント
+app.post('/api/pickup-locations', async (req, res) => {
+  const { name, latitude, longitude } = req.body
+
+  // 入力チェック
+  if (
+    !name?.trim() ||
+    latitude === undefined ||
+    longitude === undefined ||
+    latitude === null ||
+    longitude === null ||
+    !Number.isFinite(Number(latitude)) ||
+    !Number.isFinite(Number(longitude)) ||
+    Number(latitude) < -90 ||
+    Number(latitude) > 90 ||
+    Number(longitude) < -180 ||
+    Number(longitude) > 180
+  ) {
+    return res.status(400).json({
+      message: '送迎場所の名前、緯度、経度を正しく入力してください'
+    })
+  }
+
+  // 同じ名前の送迎場所があるか確認
+  const { data: existingLocation, error: searchError } = await supabase
+    .from('pickup_locations')
+    .select('id, name, latitude, longitude')
+    .eq('name', name.trim())
+    .maybeSingle()
+
+  if (searchError) {
+    console.error('送迎場所検索エラー:', searchError.message)
+
+    return res.status(500).json({
+      message: '送迎場所の検索に失敗しました'
+    })
+  }
+
+  // 登録済みなら既存データを返す
+  if (existingLocation) {
+    return res.status(200).json({
+      message: '登録済みの送迎場所です',
+      location: existingLocation
+    })
+  }
+
+  // 新しい送迎場所を登録
+  const { data, error } = await supabase
+    .from('pickup_locations')
+    .insert({
+      name: name.trim(),
+      latitude: Number(latitude),
+      longitude: Number(longitude)
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('送迎場所登録エラー:', error.message)
+
+    return res.status(500).json({
+      message: '送迎場所の登録に失敗しました'
+    })
+  }
+
+  return res.status(201).json({
+    message: '送迎場所を登録しました',
+    location: data
+  })
+})
 
 
 

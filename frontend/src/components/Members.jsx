@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Members.css'
 
@@ -28,11 +28,46 @@ function Members({ membersData, onMemberAdded }) {
     pickupLocation: '',
     capacity: ''
   })
+
+  // 送迎場所一覧
+  const [pickupLocations, setPickupLocations] = useState([])
+
+// Supabaseから送迎場所一覧を取得
+  useEffect(() => {
+    const fetchPickupLocations = async () => {
+      try {
+        const response = await axios.get('/api/pickup-locations')
+        setPickupLocations(response.data.locations)
+      } catch (error) {
+        console.error('送迎場所の取得に失敗しました:', error)
+      }
+    }
+
+  fetchPickupLocations()
+  }, [])
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
+
+    if (name == 'pickupLocation') {
+      const matchedMember = membersData.find(
+        member => member.pickupLocation?.trim() === value.trim() && value.trim() !== ''
+      )
+
+      if (matchedMember) {
+        setFormData(prev => ({
+          ...prev,
+          pickupLocation: value,
+          latitude: String(matchedMember.latitude),
+          longitude: String(matchedMember.longitude)
+        }))
+        return
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -409,7 +444,7 @@ function Members({ membersData, onMemberAdded }) {
                   type="number"
                   id="latitude"
                   name="latitude"
-                  placeholder="35.6762"
+                  placeholder="例)35.6762"
                   step="0.0001"
                   value={formData.latitude}
                   onChange={handleInputChange}
@@ -423,7 +458,7 @@ function Members({ membersData, onMemberAdded }) {
                   type="number"
                   id="longitude"
                   name="longitude"
-                  placeholder="139.7674"
+                  placeholder="例)140.7674"
                   step="0.0001"
                   value={formData.longitude}
                   onChange={handleInputChange}
@@ -437,11 +472,37 @@ function Members({ membersData, onMemberAdded }) {
                   type="text"
                   id="pickupLocation"
                   name="pickupLocation"
-                  placeholder="◯◯駅"
+                  placeholder="例)春4ファミマ"
                   value={formData.pickupLocation}
                   onChange={handleInputChange}
                   required
                 />
+
+                {formData.pickupLocation.trim() !== '' && (
+                  <div className="location-suggestions">
+                  {pickupLocations
+                    .filter(location =>
+                      location.name.includes(formData.pickupLocation.trim())
+                    )
+                    .map(location => (
+                      <button
+                        key={location.id}
+                        type="button"
+                        className="location-suggestion"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            pickupLocation: location.name,
+                            latitude: String(location.latitude),
+                            longitude: String(location.longitude)
+                          }))
+                        }}
+                      >
+                        {location.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="form-actions">
@@ -610,6 +671,32 @@ function Members({ membersData, onMemberAdded }) {
                       onChange={handleEditInputChange}
                       required
                     />
+
+                    {editFormData.pickupLocation.trim() !== '' && (
+                      <div className="location-suggestions">
+                        {pickupLocations
+                          .filter(location =>
+                            location.name.includes(editFormData.pickupLocation.trim())
+                          )
+                          .map(location => (
+                            <button
+                              key={location.id}
+                              type="button"
+                              className="location-suggestion"
+                              onClick={() => {
+                                setEditFormData(prev => ({
+                                ...prev,
+                                pickupLocation: location.name,
+                                latitude: String(location.latitude),
+                                longitude: String(location.longitude)
+                              }))
+                            }}
+                            >
+                             {location.name}
+                            </button>
+                          ))}
+                        </div>
+                    )}
                   </div>
 
                   <div className="form-group">
