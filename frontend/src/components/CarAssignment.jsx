@@ -5,6 +5,7 @@ import './CarAssignment.css'
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
   const [selectedParticipants, setSelectedParticipants] = useState(new Set())
   const [assignments, setAssignments] = useState([])
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(true)
   const [unassignmentPassengers, setUnassignmentPassengers] = useState([])
   const [showParticipants, setShowParticipants] = useState(true)
 
@@ -14,6 +15,7 @@ useEffect(() => {
     if (!schedule?.id) return
 
     try {
+      setIsLoadingAssignments(true)
       const response = await api.get(`/api/assignments/${schedule.id}`)
       const data = response.data
       console.log('保存済みの車割り:', data.assignments)
@@ -40,6 +42,8 @@ if (participantResponse.status === 200) {
 }
     } catch (error) {
       console.error('車割り取得エラー:', error)
+    }finally{
+      setIsLoadingAssignments(false)
     }
   }
 
@@ -254,7 +258,10 @@ try {
               </div>
             )}
 
-            {assignments.map((assignment, index) => (
+            {isLoadingAssignments ? (
+              <p className="loading-message">車割り参照中...</p>
+            ) : (
+              assignments.map((assignment, index) => (
               <div key={index} className="assignment-card">
                 <div className="assignment-card-header">
                   <h3>🚗 {assignment.driver.name}カー</h3>
@@ -271,7 +278,7 @@ try {
                   ))}
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         )}
 
