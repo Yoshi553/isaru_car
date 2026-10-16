@@ -7,8 +7,15 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
 const sortedMembersData = membersData
   .map((member, index) => ({ ...member, originalIndex: index }))
   .sort((a, b) => {
-    return (a.enrollmentYear ?? Infinity) - (b.enrollmentYear ?? Infinity)
+    const yearA = a.enrollmentYear ?? Infinity
+    const yearB = b.enrollmentYear ?? Infinity
+
+    if (yearA !== yearB){
+      return yearA - yearB
+    }
+    return a.name.localeCompare(b.name, 'ja')
   })
+  
   const [assignments, setAssignments] = useState([])
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(true)
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(true)
