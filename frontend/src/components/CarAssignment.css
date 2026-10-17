@@ -401,6 +401,7 @@
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 16px;
+  margin-top: 10px;
 }
 
 .copy-button:hover {
