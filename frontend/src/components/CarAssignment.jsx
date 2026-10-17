@@ -147,9 +147,6 @@ try {
     }))
   })
 
-
-
-
   console.log('車割りを保存しました')
 } catch (error) {
   console.error('車割り保存エラー:', error)
@@ -157,6 +154,42 @@ try {
 }
 
    
+
+const handleCopyAssignments = async () => {
+  const text = [
+    '【車割り結果】',
+    '',
+    ...assignments.map((assignment) => {
+      const passengers = assignment.passengers
+        .map((passenger) => `・${passenger.name}`)
+        .join('\n')
+
+      return [
+        `🚗 ${assignment.driver.name}カー（${assignment.passengers.length + 1}/${assignment.driver.capacity}名）`,
+        passengers,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    }),
+    ...(unassignmentPassengers.length > 0
+      ? [
+          '',
+          '⚠️ 車が足りません',
+          ...unassignmentPassengers.map((member) => `・${member.name}`),
+        ]
+      : []),
+  ].join('\n\n')
+
+  try {
+    await navigator.clipboard.writeText(text)
+    alert('車割り結果をコピーしました！')
+  } catch (error) {
+    console.error('コピーに失敗しました:', error)
+    alert('コピーに失敗しました。')
+  }
+}
+
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString + 'T00:00:00')
@@ -267,6 +300,12 @@ try {
         {assignments.length > 0 && (
           <div className="assignment-result">
             <h2>車割り結果</h2>
+
+            <button
+            className="copy-button" onClick={handleCopyAssignments}
+            >
+              📋 車割り結果をコピー
+              </button>
 
             {unassignmentPassengers.length > 0 && (
               <div className="unassigned-passengers">
