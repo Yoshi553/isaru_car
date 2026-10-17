@@ -125,7 +125,7 @@ function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded,
               onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
             >
               <div className="schedule-date">
-                📅 {formatDate(schedule.date)} 🕐 {schedule.time} 📍 {schedule.location}
+                 {formatDate(schedule.date)} 🕐 {schedule.time} 📍 {schedule.location}
               </div>
               {schedule.notes && (
                 <div className="schedule-notes">
