@@ -117,12 +117,50 @@
   padding: 15px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 .schedule-card:hover {
   transform: translateX(4px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
+
+.schedule-card:has(.delete-schedule-btn:hover) {
+  transform: none;
+}
+
+.schedule-info{
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.delete-schedule-btn {
+  background-color: white;
+  color: #e05252;
+  border: 1px solid #e05252;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.delete-schedule-btn:hover {
+  background-color: #e05252;
+  color: white;
+}
+
+.delete-schedule-btn:active {
+  transform: scale(0.96);
+}
+
 
 .schedule-date {
   font-weight: 700;

@@ -65,6 +65,40 @@ function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded,
     }
   }
 
+const handleDeleteSchedule = async (schedule) => {
+  const confirmed = window.confirm(
+    `${formatDate(schedule.date)} ${schedule.location} の練習日程を削除しますか？`
+  )
+
+  if (!confirmed) return
+
+  try {
+    await api.delete('/api/schedule', {
+      data: {
+        date: schedule.date,
+        time: schedule.time,
+        location: schedule.location,
+      },
+    })
+
+    alert('練習日程を削除しました！')
+
+    if (onScheduleAdded) {
+      onScheduleAdded()
+    }
+  } catch (error) {
+    console.error('日程の削除に失敗しました:', error)
+    console.error('レスポンス:', error.response?.data)
+    console.error('HTTPステータス:', error.response?.status)
+
+    alert(
+      error.response?.data?.message ||
+      error.message ||
+      '練習日程の削除に失敗しました。'
+    )
+  }
+}
+
   const handleCloseForm = () => {
     setShowAddForm(false)
     setFormData({ date: '', time: '', location: '', notes: '' })
@@ -115,30 +149,44 @@ function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded,
           </div>
         </div>
       </div>
-
       <div className="schedules-list">
-        {currentSchedules.length > 0 ? (
-          currentSchedules.map((schedule, index) => (
-            <div 
-              key={index} 
-              className="schedule-card"
-              onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
-            >
-              <div className="schedule-date">
-                 {formatDate(schedule.date)} 🕐 {schedule.time} 📍 {schedule.location}
-              </div>
-              {schedule.notes && (
-                <div className="schedule-notes">
-                  📝 {schedule.notes}
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <div className="empty-message">
-            この月の練習日程はまだ登録されていません
+  {currentSchedules.length > 0 ? (
+    currentSchedules.map((schedule, index) => (
+      <div
+        key={schedule.id ?? index}
+        className="schedule-card"
+      >
+        <div
+          className="schedule-info"
+          onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
+        >
+          <div className="schedule-date">
+            {formatDate(schedule.date)} 🕐 {schedule.time} 📍 {schedule.location}
           </div>
-        )}
+
+          {schedule.notes && (
+            <div className="schedule-notes">
+              📝 {schedule.notes}
+            </div>
+          )}
+        </div>
+
+        <button
+          className="delete-schedule-btn"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDeleteSchedule(schedule)
+          }}
+        >
+          🗑️ 削除
+        </button>
+      </div>
+    ))
+  ) : (
+    <div className="empty-message">
+      この月の練習日程はまだ登録されていません
+    </div>
+  )}
       </div>
 
       {/* 日程追加モーダル */}
