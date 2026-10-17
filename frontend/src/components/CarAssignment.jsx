@@ -158,7 +158,6 @@ try {
 const handleCopyAssignments = async () => {
   const text = [
     '【車割り結果】',
-    '',
     ...assignments.map((assignment) => {
       const passengers = assignment.passengers
         .map((passenger) => `・${passenger.name}`)
