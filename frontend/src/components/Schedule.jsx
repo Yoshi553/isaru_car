@@ -182,7 +182,7 @@ const handleDeleteSchedule = async (schedule) => {
             handleDeleteSchedule(schedule)
           }}
         >
-          🗑️ 削除
+          🗑️
         </button>
       </div>
     ))
