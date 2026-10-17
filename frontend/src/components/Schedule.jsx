@@ -161,7 +161,11 @@ const handleDeleteSchedule = async (schedule) => {
           onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
         >
           <div className="schedule-date">
-            {formatDate(schedule.date)} 🕐 {schedule.time} 📍 {schedule.location}
+            {formatDate(schedule.date)} 
+          </div>
+
+          <div className="schedule-date">
+            🕐 {schedule.time} 📍 {schedule.location}
           </div>
 
           {schedule.notes && (
