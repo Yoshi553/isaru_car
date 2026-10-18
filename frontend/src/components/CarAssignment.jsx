@@ -342,6 +342,14 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
           <div className="participants-header">
             <h2>参加者選択</h2>
 
+
+             <button
+              className="toggle-participants-button"
+              onClick={() => setShowParticipants(!showParticipants)}
+            >
+              {showParticipants ? "▲ 閉じる" : "▼ 参加者を表示"}
+            </button>
+
             <div className="participant-count">
               <span className="participant-count-badge">
                 合計参加者：{participantRoles.size}名
@@ -356,12 +364,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
               <br />⚪️不参加→🟢運転手→🔵乗客
             </p>
 
-            <button
-              className="toggle-participants-button"
-              onClick={() => setShowParticipants(!showParticipants)}
-            >
-              {showParticipants ? "▲ 閉じる" : "▼ 参加者を表示"}
-            </button>
+           
  
           </div>
 
