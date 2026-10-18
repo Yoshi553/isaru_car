@@ -3,7 +3,6 @@ import api from "../api";
 import "./CarAssignment.css";
 
 function CarAssignment({ schedule, membersData, onBack, onLogout }) {
-  const [selectedParticipants, setSelectedParticipants] = useState(new Set());
   const sortedMembersData = membersData
     .map((member, index) => ({ ...member, originalIndex: index }))
     .sort((a, b) => {
@@ -18,6 +17,7 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
 
   const [assignments, setAssignments] = useState([]);
   const [selectedPassenger, setSelectedPassenger] = useState(null);
+  const [participantRoles, setParticipantRoles] = useState(new Map());
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(true);
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(true);
   const [unassignmentPassengers, setUnassignmentPassengers] = useState([]);
@@ -30,31 +30,56 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
 
       try {
         setIsLoadingAssignments(true);
-        const response = await api.get(`/api/assignments/${schedule.id}`);
         setIsLoadingParticipants(true);
-        const data = response.data;
-        console.log("保存済みの車割り:", data.assignments);
 
-        setAssignments(data.assignments);
-        console.log("取得した車割り:", data.assignments);
-        // 保存済みの参加者を選択状態にする
+        // 保存済みの車割りを取得
+        const response = await api.get(`/api/assignments/${schedule.id}`);
+
+        const data = response.data;
+        const savedAssignments = data.assignments ?? [];
+
+        console.log("保存済みの車割り:", savedAssignments);
+
+        setAssignments(savedAssignments);
+
+        // 保存済みの参加者を取得
         const participantResponse = await api.get(
           `/api/participants/${schedule.id}`,
         );
 
         const participantData = participantResponse.data;
-        console.log("保存済みの参加者ID:", participantData.participantIds);
+        const participantIds = participantData.participantIds ?? [];
 
-        if (participantResponse.status === 200) {
-          const selectedMemberIds = membersData
-            .filter((member) =>
-              participantData.participantIds.includes(member.id),
-            )
-            .map((member) => member.id);
+        console.log("保存済みの参加者ID:", participantIds);
 
-          setSelectedParticipants(new Set(selectedMemberIds));
-          console.log("復元する参加者のID:", selectedMemberIds);
-        }
+        // 運転手と乗客の役割を復元
+        const restoredRoles = new Map();
+
+        savedAssignments.forEach((assignment) => {
+          if (assignment.driver?.id != null) {
+            restoredRoles.set(assignment.driver.id, 1);
+          }
+
+          (assignment.passengers ?? []).forEach((passenger) => {
+            if (passenger.id != null) {
+              restoredRoles.set(passenger.id, 2);
+            }
+          });
+        });
+
+        // 車に割り当てられていない参加者は乗客として復元
+        membersData.forEach((member) => {
+          if (
+            participantIds.includes(member.id) &&
+            !restoredRoles.has(member.id)
+          ) {
+            restoredRoles.set(member.id, 2);
+          }
+        });
+
+        setParticipantRoles(restoredRoles);
+
+        console.log("復元した役割:", [...restoredRoles.entries()]);
       } catch (error) {
         console.error("車割り取得エラー:", error);
       } finally {
@@ -64,65 +89,79 @@ function CarAssignment({ schedule, membersData, onBack, onLogout }) {
     };
 
     fetchAssignments();
-  }, [schedule?.id]);
-
+  }, [schedule?.id, membersData]);
   const handleParticipantToggle = (memberId) => {
-  const newSelected = new Set(selectedParticipants);
+    setParticipantRoles((prev) => {
+      const next = new Map(prev);
+      const currentRole = next.get(memberId) ?? 0;
 
-  if (newSelected.has(memberId)) {
-    newSelected.delete(memberId);
-  } else {
-    newSelected.add(memberId);
-  }
+      const member = membersData.find((member) => member.id === memberId);
 
-  setSelectedParticipants(newSelected);
-};
+      // 不参加 → 運転手 → 乗客 → 不参加
+      let nextRole = (currentRole + 1) % 3;
 
-const handleMovePassenger = async (targetDriverId) => {
-  if (!selectedPassenger) return;
+      if (!member?.hasCar && nextRole === 1) {
+        nextRole = 2;
+      }
 
-  const updatedAssignments = assignments.map((assignment) => {
-    const remainingPassengers = assignment.passengers.filter(
-      (passenger) => passenger.id !== selectedPassenger.id
-    );
+      if (nextRole === 0) {
+        next.delete(memberId);
+      } else {
+        next.set(memberId, nextRole);
+      }
 
-    if (assignment.driver.id === targetDriverId) {
+      return next;
+    });
+  };
+
+  const driverCount = [...participantRoles.values()].filter(
+    (role) => role === 1,
+  ).length;
+
+  const handleMovePassenger = async (targetDriverId) => {
+    if (!selectedPassenger) return;
+
+    const updatedAssignments = assignments.map((assignment) => {
+      const remainingPassengers = assignment.passengers.filter(
+        (passenger) => passenger.id !== selectedPassenger.id,
+      );
+
+      if (assignment.driver.id === targetDriverId) {
+        return {
+          ...assignment,
+          passengers: [...remainingPassengers, selectedPassenger],
+        };
+      }
+
       return {
         ...assignment,
-        passengers: [...remainingPassengers, selectedPassenger]
+        passengers: remainingPassengers,
       };
-    }
-
-    return {
-      ...assignment,
-      passengers: remainingPassengers
-    };
-  });
-
-  // 画面の車割りを更新
-  setAssignments(updatedAssignments);
-  setSelectedPassenger(null);
-
-  try {
-    // 更新した車割りをSupabaseに保存
-    await api.post("/api/assignments", {
-      scheduleId: schedule.id,
-      participantIds: [...selectedParticipants],
-      assignments: updatedAssignments.map((assignment) => ({
-        driverId: assignment.driver.id,
-        passengerIds: assignment.passengers.map(
-          (passenger) => passenger.id
-        )
-      }))
     });
 
-    console.log("移動後の車割りを保存しました");
-  } catch (error) {
-    console.error("車割り保存エラー:", error);
-    alert("車割りの保存に失敗しました。ページを更新する前に、もう一度保存状況を確認してください。");
-  }
-};
+    // 画面の車割りを更新
+    setAssignments(updatedAssignments);
+    setSelectedPassenger(null);
 
+    try {
+      // 更新した車割りをSupabaseに保存
+      await api.post("/api/assignments", {
+        scheduleId: schedule.id,
+        participantIds: [...participantRoles.keys()],
+        assignments: updatedAssignments.map((assignment) => ({
+          driverId: assignment.driver.id,
+          passengerIds: assignment.passengers.map((passenger) => passenger.id),
+        })),
+      });
+
+      console.log("移動後の車割りを保存しました");
+    } catch (error) {
+      console.error("車割り保存エラー:", error);
+      alert(
+        "車割りの保存に失敗しました。ページを更新する前に、もう一度保存状況を確認してください。",
+      );
+    }
+  };
 
   // 車割り作成のロジック
   const calcDistance = (lat1, lon1, lat2, lon2) => {
@@ -141,18 +180,18 @@ const handleMovePassenger = async (targetDriverId) => {
   };
 
   const handleCreateAssignments = async () => {
-    const participants = membersData.filter((member) =>
-      selectedParticipants.has(member.id),
+    // 青色（role === 1）の人をドライバーにする
+    const drivers = membersData.filter(
+      (member) => participantRoles.get(member.id) === 1,
     );
 
-    console.log("Selected Participants:", participants);
-    console.log(
-      "Driver Candidates:",
-      participants.filter((member) => member.hasCar),
+    // 緑色（role === 2）の人を乗客にする
+    const passengers = membersData.filter(
+      (member) => participantRoles.get(member.id) === 2,
     );
 
-    const drivers = participants.filter((member) => member.hasCar);
-    const passengers = participants.filter((member) => !member.hasCar);
+    console.log("Drivers:", drivers);
+    console.log("Passengers:", passengers);
 
     const newAssignments = drivers.map((driver) => ({
       driver: driver,
@@ -201,7 +240,7 @@ const handleMovePassenger = async (targetDriverId) => {
     try {
       await api.post("/api/assignments", {
         scheduleId: schedule.id,
-        participantIds: participants.map((member) => member.id),
+        participantIds: [...participantRoles.keys()],
         assignments: newAssignments.map((assignment) => ({
           driverId: assignment.driver.id,
           passengerIds: assignment.passengers.map((passenger) => passenger.id),
@@ -256,11 +295,14 @@ const handleMovePassenger = async (targetDriverId) => {
     return `${month}/${day} (${weekDay})`;
   };
 
+  // 役割が選択されている参加者
   const selectedParticipantsData = membersData.filter((member) =>
-    selectedParticipants.has(member.id),
+    participantRoles.has(member.id),
   );
-  const driverCandidates = selectedParticipantsData.filter(
-    (member) => member.hasCar,
+
+  // 運転手に選択されている人
+  const driverCandidates = membersData.filter(
+    (member) => participantRoles.get(member.id) === 1,
   );
 
   return (
@@ -282,7 +324,7 @@ const handleMovePassenger = async (targetDriverId) => {
               <span className="detail-label">📅 日付</span>
               <span className="detail-value">{formatDate(schedule.date)}</span>
             </div>
-      
+
             <div className="detail-row">
               <span className="detail-label">📍 場所</span>
               <span className="detail-value">{schedule.location}</span>
@@ -300,16 +342,27 @@ const handleMovePassenger = async (targetDriverId) => {
           <div className="participants-header">
             <h2>参加者選択</h2>
 
+            <div className="participant-count">
+              <span className="participant-count-badge">
+                合計参加者：{participantRoles.size}名
+                </span>
+              <span className="driver-count-badge">
+                運転手：{driverCount}名
+              </span>
+            </div>
+
+            <p className="participant-instruction">
+              カードをタップして役割変更可能（運転手のみ）
+              <br />⚪️不参加→🟢運転手→🔵乗客
+            </p>
+
             <button
               className="toggle-participants-button"
               onClick={() => setShowParticipants(!showParticipants)}
             >
               {showParticipants ? "▲ 閉じる" : "▼ 参加者を表示"}
             </button>
-            <div className="participant-count">
-              <span>参加者：{selectedParticipants.size}名</span>
-              <span>車を持つ人：{driverCandidates.length}名</span>
-            </div>
+ 
           </div>
 
           {showParticipants && (
@@ -320,7 +373,13 @@ const handleMovePassenger = async (targetDriverId) => {
                 sortedMembersData.map((member) => (
                   <div
                     key={member.id}
-                    className={`participant-card ${selectedParticipants.has(member.id) ? "selected" : ""}`}
+                    className={`participant-card ${
+                      participantRoles.get(member.id) === 1
+                        ? "selected driver-selected"
+                        : participantRoles.get(member.id) === 2
+                          ? "selected passenger-selected"
+                          : ""
+                    }`}
                     onClick={() => handleParticipantToggle(member.id)}
                   >
                     <div className="participant-info">
@@ -345,7 +404,7 @@ const handleMovePassenger = async (targetDriverId) => {
         <div className="assignment-actions">
           <button
             className="create-button"
-            disabled={selectedParticipants.size === 0}
+            disabled={participantRoles === 0}
             onClick={handleCreateAssignments}
           >
             車割りを作成
@@ -389,7 +448,6 @@ const handleMovePassenger = async (targetDriverId) => {
                     <span className="assignment-count">
                       {assignment.passengers.length + 1}/
                       {assignment.driver.capacity}名
-                    
                     </span>
                   </div>
 

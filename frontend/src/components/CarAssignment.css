@@ -21,7 +21,9 @@
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   white-space: nowrap;
 }
 
@@ -107,14 +109,35 @@
   cursor: pointer;
 }
 
-.participant-count{
+.participant-count {
   display: flex;
   gap: 15px;
   align-items: center;
+  background-color: #667eea;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.participant-count {
-  background-color: #667eea;
+/* 参加者：緑色 */
+
+.participant-count-badge {
+  display: inline-block;
+  background-color: #667eeabf;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 運転手：青色 */
+
+.driver-count-badge {
+  display: inline-block;
+  background-color: #48bb78b8;
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
@@ -142,24 +165,32 @@
   background-color: #f9f9f9;
 }
 
-/* .participant-card:hover {
-  border-color: #667eea;
-  background-color: #f5f7fa;
-} */
-
 .participant-card.selected {
   border-color: #667eea;
   background-color: #75bdf8a2;
   border-width: 2px;
 }
 
-/* .participant-card input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  margin: 2px 0 0;
-  flex-shrink: 0;
-} */
+/* 運転手：：緑 */
+.participant-card.passenger-selected {
+  background-color: #75bdf8a2;
+  border-color: #667eea;
+  color: white;
+}
+
+/* 乗客 */
+.participant-card.driver-selected {
+  background-color: #48bb7884;
+  border-color: #48bb78;
+  color: white;
+}
+
+.participant-instruction {
+  margin: 8px 0 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #666;
+}
 
 .participant-info {
   display: flex;
@@ -180,8 +211,6 @@
   font-size: 13px;
   font-weight: 600;
 }
-
-
 
 .empty-message {
   text-align: center;
@@ -238,7 +267,7 @@
   cursor: not-allowed;
 }
 
-.assignment-actions{
+.assignment-actions {
   margin-top: -10px;
   border-radius: 8px;
 }
@@ -250,7 +279,6 @@
   font-weight: 600;
   padding: 20px;
 }
-
 
 .unassigned-result {
   margin-top: 20px;
@@ -272,12 +300,12 @@
   font-size: 10px;
 }
 
-.unassigned-member{
+.unassigned-member {
   padding: 8px;
   background-color: #fff0f0;
   border: 1px solid #ffcccc;
   border-radius: 6px;
-  font-weight: bold;;
+  font-weight: bold;
 }
 
 /* 車割り結果全体 */
@@ -412,9 +440,6 @@
   background-color: #43a047;
 }
 
-
-
-
 /* モーダルの背景 */
 .modal-overlay {
   position: fixed;
@@ -476,7 +501,9 @@
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
 .move-car-option:hover {
@@ -519,9 +546,6 @@
     font-size: 14px;
   }
 }
-
-
-
 
 @media (max-width: 480px) {
   .assignment-content {
