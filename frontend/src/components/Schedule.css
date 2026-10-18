@@ -7,11 +7,20 @@
 
 .schedule-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid #f0f0f0;
+}
+
+.schedule-title-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .schedule-header h2 {
@@ -86,7 +95,7 @@
 .schedules-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
   flex: 1;
   overflow-y: auto;
   padding-right: 10px;
@@ -114,13 +123,13 @@
   background: linear-gradient(135deg, #f5f7fa 0%, #f9f9f9 100%);
   border-left: 4px solid #667eea;
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .schedule-card:hover {
@@ -135,6 +144,7 @@
 .schedule-info{
   flex: 1;
   min-width: 0;
+  padding: 10px;
   cursor: pointer;
 }
 
@@ -165,8 +175,8 @@
 .schedule-date {
   font-weight: 700;
   color: #667eea;
-  margin-bottom: 10px;
-  font-size: 15px;
+  margin-bottom: 5px;
+  font-size: 9px;
 }
 
 .schedule-details {
@@ -368,6 +378,35 @@
   cursor: not-allowed;
 }
 
+
+/* 過去の日程をコンパクトに表示 */
+.past-schedule {
+  height: 20px;
+  margin: 2px;
+  opacity: 0.6;
+  overflow: hidden;
+}
+
+.past-schedule .schedule-date {
+  height: 20px;
+  margin-bottom: 2px;
+  font-size: 8px;
+  overflow: hidden;
+}
+
+.past-schedule .schedule-notes {
+  font-size: 8px;
+  
+}
+
+.past-schedule .delete-schedule-btn {
+  padding: 1px 3px;
+  font-size: 8px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+
 @media (max-width: 768px) {
   .schedule-container {
     padding: 20px;
@@ -375,8 +414,13 @@
 
   .schedule-header {
     flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .schedule-title-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .schedule-header h2 {

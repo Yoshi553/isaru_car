@@ -65,13 +65,13 @@ function Schedule({
         onScheduleAdded();
       }
     } catch (err) {
-  console.error("日程追加エラー:", err.response?.data);
-  console.error("HTTPステータス:", err.response?.status);
+      console.error("日程追加エラー:", err.response?.data);
+      console.error("HTTPステータス:", err.response?.status);
 
-  setFormError(err.response?.data?.message || "日程の追加に失敗しました");
-} finally {
-  setIsSubmitting(false);
-}
+      setFormError(err.response?.data?.message || "日程の追加に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteSchedule = async (schedule) => {
@@ -130,39 +130,48 @@ function Schedule({
   return (
     <div className="schedule-container">
       <div className="schedule-header">
-        <h2>⚽️ 練習日程</h2>
-        <div className="header-controls">
+        <div className="schedule-title-row">
+          <h2>⚽️ 練習日程</h2>
+
           <button
             onClick={() => setShowAddForm(true)}
             className="add-schedule-btn"
           >
             ➕ 追加
           </button>
-          <div className="month-selector">
-            <button
-              onClick={handlePrevMonth}
-              disabled={months.indexOf(selectedMonth) === 0}
-              className="month-btn"
-            >
-              ◀
-            </button>
-            <span className="month-display">
-              {formatMonthDisplay(selectedMonth)}
-            </span>
-            <button
-              onClick={handleNextMonth}
-              disabled={months.indexOf(selectedMonth) === months.length - 1}
-              className="month-btn"
-            >
-              ▶
-            </button>
-          </div>
+        </div>
+
+        <div className="month-selector">
+          <button
+            onClick={handlePrevMonth}
+            disabled={months.indexOf(selectedMonth) === 0}
+            className="month-btn"
+          >
+            ◀
+          </button>
+
+          <span className="month-display">
+            {formatMonthDisplay(selectedMonth)}
+          </span>
+
+          <button
+            onClick={handleNextMonth}
+            disabled={months.indexOf(selectedMonth) === months.length - 1}
+            className="month-btn"
+          >
+            ▶
+          </button>
         </div>
       </div>
       <div className="schedules-list">
         {currentSchedules.length > 0 ? (
           currentSchedules.map((schedule, index) => (
-            <div key={schedule.id ?? index} className="schedule-card">
+            <div key={schedule.id ?? index}
+            className={`schedule-card ${
+              schedule.date < new Date().toLocaleDateString('sv-SE')
+              ? 'past-schedule'
+              : ''
+            }`}>
               <div
                 className="schedule-info"
                 onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
