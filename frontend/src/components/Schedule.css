@@ -120,6 +120,7 @@
 }
 
 .schedule-card {
+  height: 60px;
   background: linear-gradient(135deg, #f5f7fa 0%, #f9f9f9 100%);
   border-left: 4px solid #667eea;
   border-radius: 8px;
@@ -176,7 +177,7 @@
   font-weight: 700;
   color: #667eea;
   margin-bottom: 5px;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .schedule-details {
@@ -187,14 +188,14 @@
 }
 
 .schedule-time {
-  font-size: 14px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .schedule-location {
-  font-size: 14px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -381,7 +382,7 @@
 
 /* 過去の日程をコンパクトに表示 */
 .past-schedule {
-  height: 20px;
+  height: 30px;
   margin: 2px;
   opacity: 0.6;
   overflow: hidden;
@@ -390,7 +391,7 @@
 .past-schedule .schedule-date {
   height: 20px;
   margin-bottom: 2px;
-  font-size: 8px;
+  font-size: 9px;
   overflow: hidden;
 }
 
@@ -401,7 +402,7 @@
 
 .past-schedule .delete-schedule-btn {
   padding: 1px 3px;
-  font-size: 8px;
+  font-size: 9px;
   border-radius: 3px;
   line-height: 1;
 }
