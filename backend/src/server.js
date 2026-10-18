@@ -162,7 +162,6 @@ app.get('/api/schedule', async (req, res) => {
     schedule[month].push({
       id: item.id,
       date: item.date,
-      time: item.time,
       location: item.location,
       notes: item.notes
     })
@@ -173,19 +172,18 @@ app.get('/api/schedule', async (req, res) => {
 
 // 練習日程追加エンドポイント
 app.post('/api/schedule', async (req, res) => {
-  const { date, time, location, notes } = req.body
+  const { date, location, notes } = req.body
 
   // バリデーション
-  if (!date || !time || !location) {
+  if (!date || !location) {
     return res.status(400).json({
-      message: '日付、時間、場所は必須です'
+      message: '日付、場所は必須です'
     })
   }
 
   // Supabaseに保存するデータ
   const newSchedule = {
     date,
-    time,
     location,
     notes: notes || ''
   }
@@ -209,7 +207,6 @@ app.post('/api/schedule', async (req, res) => {
     schedule: {
       id: data.id,
       date: data.date,
-      time: data.time,
       location: data.location,
       notes: data.notes
     }
@@ -218,12 +215,12 @@ app.post('/api/schedule', async (req, res) => {
 
 // 練習日程削除エンドポイント
 app.delete('/api/schedule', async (req, res) => {
-  const { date, time, location } = req.body
+  const { date, location } = req.body
 
   // 必須項目の確認
-  if (!date || !time || !location) {
+  if (!date || !location) {
     return res.status(400).json({
-      message: '日付、時間、場所は必須です'
+      message: '日付、場所は必須です'
     })
   }
 
@@ -232,7 +229,6 @@ app.delete('/api/schedule', async (req, res) => {
     .from('schedules')
     .select('*')
     .eq('date', date)
-    .eq('time', time)
     .eq('location', location)
     .order('id', { ascending: true })
     .limit(1)
@@ -269,7 +265,6 @@ app.delete('/api/schedule', async (req, res) => {
     schedule: {
       id: targetSchedule.id,
       date: targetSchedule.date,
-      time: targetSchedule.time,
       location: targetSchedule.location,
       notes: targetSchedule.notes
     }
@@ -312,7 +307,7 @@ app.post('/api/members', async (req, res) => {
   // バリデーション
   if (!name || latitude === undefined || longitude === undefined || !pickupLocation) {
     return res.status(400).json({ 
-      message: '名前、緯度、経度、送迎場所の名前は必須です' 
+      message: '名前、送迎場所は必須です' 
     })
   }
 
@@ -867,3 +862,4 @@ app.listen(PORT, () => {
   console.log(`🚗 車割りアプリ - バックエンドサーバー起動`)
   console.log(`📍 ポート: ${PORT}`)
 })
+

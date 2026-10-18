@@ -1,145 +1,155 @@
-import { useState } from 'react'
-import api from '../api'
-import './Schedule.css'
+import { useState } from "react";
+import api from "../api";
+import "./Schedule.css";
 
-function Schedule({ scheduleData, selectedMonth, onMonthChange, onScheduleAdded, onScheduleSelect }) {
-  const [showAddForm, setShowAddForm] = useState(false)
+function Schedule({
+  scheduleData,
+  selectedMonth,
+  onMonthChange,
+  onScheduleAdded,
+  onScheduleSelect,
+}) {
+  const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
-    date: '',
-    time: '',
-    location: '',
-    notes: ''
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formError, setFormError] = useState('')
+    date: "",
+    location: "",
+    notes: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  const months = Object.keys(scheduleData).sort()
-  const currentSchedules = scheduleData[selectedMonth] || []
+  const months = Object.keys(scheduleData).sort();
+  const currentSchedules = scheduleData[selectedMonth] || [];
 
   const handlePrevMonth = () => {
-    const months = Object.keys(scheduleData).sort()
-    const currentIndex = months.indexOf(selectedMonth)
+    const months = Object.keys(scheduleData).sort();
+    const currentIndex = months.indexOf(selectedMonth);
     if (currentIndex > 0) {
-      onMonthChange(months[currentIndex - 1])
+      onMonthChange(months[currentIndex - 1]);
     }
-  }
+  };
 
   const handleNextMonth = () => {
-    const months = Object.keys(scheduleData).sort()
-    const currentIndex = months.indexOf(selectedMonth)
+    const months = Object.keys(scheduleData).sort();
+    const currentIndex = months.indexOf(selectedMonth);
     if (currentIndex < months.length - 1) {
-      onMonthChange(months[currentIndex + 1])
+      onMonthChange(months[currentIndex + 1]);
     }
-  }
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setFormError('')
+    e.preventDefault();
+    setFormError("");
 
+    console.log("data", formData);
     // バリデーション
-    if (!formData.date || !formData.time || !formData.location) {
-      setFormError('日付、時間、場所は必須です')
-      return
+    if (!formData.date || !formData.location) {
+      setFormError("日付、場所は必須です");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await api.post('/api/schedule', formData)
-      setFormData({ date: '', time: '', location: '', notes: '' })
-      setShowAddForm(false)
+      await api.post("/api/schedule", formData);
+      setFormData({ date: "", location: "", notes: "" });
+      setShowAddForm(false);
       if (onScheduleAdded) {
-        onScheduleAdded()
+        onScheduleAdded();
       }
     } catch (err) {
-      setFormError(err.response?.data?.message || '日程の追加に失敗しました')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  console.error("日程追加エラー:", err.response?.data);
+  console.error("HTTPステータス:", err.response?.status);
 
-const handleDeleteSchedule = async (schedule) => {
-  const confirmed = window.confirm(
-    `${formatDate(schedule.date)} ${schedule.location} の練習日程を削除しますか？`
-  )
-
-  if (!confirmed) return
-
-  try {
-    await api.delete('/api/schedule', {
-      data: {
-        date: schedule.date,
-        time: schedule.time,
-        location: schedule.location,
-      },
-    })
-
-    alert('練習日程を削除しました！')
-
-    if (onScheduleAdded) {
-      onScheduleAdded()
-    }
-  } catch (error) {
-    console.error('日程の削除に失敗しました:', error)
-    console.error('レスポンス:', error.response?.data)
-    console.error('HTTPステータス:', error.response?.status)
-
-    alert(
-      error.response?.data?.message ||
-      error.message ||
-      '練習日程の削除に失敗しました。'
-    )
-  }
+  setFormError(err.response?.data?.message || "日程の追加に失敗しました");
+} finally {
+  setIsSubmitting(false);
 }
+  };
+
+  const handleDeleteSchedule = async (schedule) => {
+    const confirmed = window.confirm(
+      `${formatDate(schedule.date)} ${schedule.location} の練習日程を削除しますか？`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete("/api/schedule", {
+        data: {
+          date: schedule.date,
+          location: schedule.location,
+        },
+      });
+
+      alert("練習日程を削除しました！");
+
+      if (onScheduleAdded) {
+        onScheduleAdded();
+      }
+    } catch (error) {
+      console.error("日程の削除に失敗しました:", error);
+      console.error("レスポンス:", error.response?.data);
+      console.error("HTTPステータス:", error.response?.status);
+
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "練習日程の削除に失敗しました。",
+      );
+    }
+  };
 
   const handleCloseForm = () => {
-    setShowAddForm(false)
-    setFormData({ date: '', time: '', location: '', notes: '' })
-    setFormError('')
-  }
+    setShowAddForm(false);
+    setFormData({ date: "", location: "", notes: "" });
+    setFormError("");
+  };
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr + 'T00:00:00')
-    return date.toLocaleDateString('ja-JP', {
-      month: 'numeric',
-      day: 'numeric',
-      weekday: 'short'
-    })
-  }
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("ja-JP", {
+      month: "numeric",
+      day: "numeric",
+      weekday: "short",
+    });
+  };
 
   const formatMonthDisplay = (monthStr) => {
-    const [year, month] = monthStr.split('-')
-    return `${year}年${parseInt(month)}月`
-  }
+    const [year, month] = monthStr.split("-");
+    return `${year}年${parseInt(month)}月`;
+  };
 
   return (
     <div className="schedule-container">
       <div className="schedule-header">
         <h2>⚽️ 練習日程</h2>
         <div className="header-controls">
-          <button 
+          <button
             onClick={() => setShowAddForm(true)}
             className="add-schedule-btn"
           >
             ➕ 追加
           </button>
           <div className="month-selector">
-            <button 
+            <button
               onClick={handlePrevMonth}
               disabled={months.indexOf(selectedMonth) === 0}
               className="month-btn"
             >
               ◀
             </button>
-            <span className="month-display">{formatMonthDisplay(selectedMonth)}</span>
-            <button 
+            <span className="month-display">
+              {formatMonthDisplay(selectedMonth)}
+            </span>
+            <button
               onClick={handleNextMonth}
               disabled={months.indexOf(selectedMonth) === months.length - 1}
               className="month-btn"
@@ -150,47 +160,38 @@ const handleDeleteSchedule = async (schedule) => {
         </div>
       </div>
       <div className="schedules-list">
-  {currentSchedules.length > 0 ? (
-    currentSchedules.map((schedule, index) => (
-      <div
-        key={schedule.id ?? index}
-        className="schedule-card"
-      >
-        <div
-          className="schedule-info"
-          onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
-        >
-          <div className="schedule-date">
-            {formatDate(schedule.date)} 
-          </div>
+        {currentSchedules.length > 0 ? (
+          currentSchedules.map((schedule, index) => (
+            <div key={schedule.id ?? index} className="schedule-card">
+              <div
+                className="schedule-info"
+                onClick={() => onScheduleSelect && onScheduleSelect(schedule)}
+              >
+                <div className="schedule-date">
+                  {formatDate(schedule.date)} 📍 {schedule.location}
+                </div>
 
-          <div className="schedule-date">
-            🕐 {schedule.time} 📍 {schedule.location}
-          </div>
+                {schedule.notes && (
+                  <div className="schedule-notes">📝 {schedule.notes}</div>
+                )}
+              </div>
 
-          {schedule.notes && (
-            <div className="schedule-notes">
-              📝 {schedule.notes}
+              <button
+                className="delete-schedule-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteSchedule(schedule);
+                }}
+              >
+                🗑️
+              </button>
             </div>
-          )}
-        </div>
-
-        <button
-          className="delete-schedule-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleDeleteSchedule(schedule)
-          }}
-        >
-          🗑️
-        </button>
-      </div>
-    ))
-  ) : (
-    <div className="empty-message">
-      この月の練習日程はまだ登録されていません
-    </div>
-  )}
+          ))
+        ) : (
+          <div className="empty-message">
+            この月の練習日程はまだ登録されていません
+          </div>
+        )}
       </div>
 
       {/* 日程追加モーダル */}
@@ -199,18 +200,13 @@ const handleDeleteSchedule = async (schedule) => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>練習日程を追加</h3>
-              <button 
-                onClick={handleCloseForm}
-                className="close-btn"
-              >
+              <button onClick={handleCloseForm} className="close-btn">
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="add-schedule-form">
-              {formError && (
-                <div className="form-error">{formError}</div>
-              )}
+              {formError && <div className="form-error">{formError}</div>}
 
               <div className="form-group">
                 <label htmlFor="date">日付 *</label>
@@ -225,29 +221,19 @@ const handleDeleteSchedule = async (schedule) => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="time">時間 *</label>
-                <input
-                  type="text"
-                  id="time"
-                  name="time"
-                  placeholder="19-22"
-                  value={formData.time}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
                 <label htmlFor="location">場所 *</label>
-                <input
-                  type="text"
+                <select
                   id="location"
                   name="location"
-                  placeholder="豊里"
                   value={formData.location}
                   onChange={handleInputChange}
                   required
-                />
+                >
+                  <option value="">場所を選択してください</option>
+                  <option value="豊里">豊里</option>
+                  <option value="セキショウ">セキショウ</option>
+                  <option value="その他">その他</option>
+                </select>
               </div>
 
               <div className="form-group">
@@ -263,7 +249,7 @@ const handleDeleteSchedule = async (schedule) => {
               </div>
 
               <div className="form-actions">
-                <button 
+                <button
                   type="button"
                   onClick={handleCloseForm}
                   className="cancel-btn"
@@ -271,12 +257,12 @@ const handleDeleteSchedule = async (schedule) => {
                 >
                   キャンセル
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="submit-btn"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? '追加中...' : '追加'}
+                  {isSubmitting ? "追加中..." : "追加"}
                 </button>
               </div>
             </form>
@@ -284,7 +270,7 @@ const handleDeleteSchedule = async (schedule) => {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default Schedule
+export default Schedule;
