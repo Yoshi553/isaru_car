@@ -282,10 +282,7 @@ const handleMovePassenger = async (targetDriverId) => {
               <span className="detail-label">📅 日付</span>
               <span className="detail-value">{formatDate(schedule.date)}</span>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">🕐 時間</span>
-              <span className="detail-value">{schedule.time}</span>
-            </div>
+      
             <div className="detail-row">
               <span className="detail-label">📍 場所</span>
               <span className="detail-value">{schedule.location}</span>
